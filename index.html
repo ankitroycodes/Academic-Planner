@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trajectory — Engineering Roadmap</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="fatalError" style="display:none;position:fixed;inset:0;background:#0B0C12;color:#F87171;font-family:monospace;padding:40px;z-index:999;white-space:pre-wrap;"></div>
+<script>
+window.addEventListener('error', function(e){
+  var box = document.getElementById('fatalError');
+  box.style.display = 'block';
+  box.textContent = 'Something broke while loading Trajectory:\n\n' + e.message + '\n\nTry refreshing the page. If this keeps happening, use Settings -> Export/Import to move your data into a fresh copy of the file.';
+});
+</script>
+
+<!-- Shared in-app feedback: replaces browser alerts, prompts, confirmations and file pickers. -->
+<div class="app-notice" id="appNotice" role="status" aria-live="polite" hidden></div>
+<div class="modal-overlay" id="appDialog" hidden role="dialog" aria-modal="true" aria-labelledby="appDialogTitle">
+  <div class="modal-card modal-card-compact">
+    <div class="modal-eyebrow" id="appDialogEyebrow">TRAJECTORY</div>
+    <div class="modal-title" id="appDialogTitle"></div>
+    <p class="modal-copy" id="appDialogCopy"></p>
+    <div class="modal-fields" id="appDialogFields"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-block" id="appDialogCancel" type="button">Cancel</button>
+      <button class="btn btn-primary btn-block" id="appDialogConfirm" type="button">Continue</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ ONBOARDING ============ -->
+<div class="onboard-overlay" id="onboardOverlay">
+  <div class="onboard-card">
+    <div class="onboard-eyebrow">TRAJECTORY // SETUP</div>
+    <h1>Plot your course.</h1>
+    <p class="onboard-sub">One profile, four years, a schedule that adapts when life gets in the way.</p>
+
+    <label class="field-label" for="obName">Your name</label>
+    <input class="field-input" id="obName" type="text" placeholder="e.g. Ankit Roy" autocomplete="off">
+
+    <label class="field-label" for="obDate">Course start date</label>
+    <input class="field-input" id="obDate" type="date">
+
+    <button class="btn btn-primary btn-block" id="obSubmit">Begin trajectory</button>
+    <div class="onboard-note">Everything is stored locally in this browser — nothing leaves your device.</div>
+  </div>
+</div>
+
+<!-- ============ APP SHELL ============ -->
+<div class="app" id="app" hidden>
+
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="brand">
+      <span class="brand-mark">▲</span>
+      <div class="brand-text">
+        <span class="brand-name">Trajectory</span>
+        <span class="brand-op" id="brandOp">OP: —</span>
+      </div>
+    </div>
+
+    <div class="clock-widget">
+      <div class="clock-time" id="clockTime">--:--:--</div>
+      <div class="clock-date" id="clockDate">—</div>
+      <div class="clock-sync" id="clockSync"><span class="dot"></span><span id="clockSyncLabel">SYNCING…</span></div>
+    </div>
+
+    <div class="nav-links">
+      <button class="nav-link active" data-page="home"><span class="nav-ic">◆</span>Home</button>
+      <button class="nav-link" data-page="academics"><span class="nav-ic">◆</span>Academics</button>
+      <button class="nav-link" data-page="projects"><span class="nav-ic">◆</span>Projects</button>
+      <button class="nav-link" data-page="progress"><span class="nav-ic">◆</span>Progress</button>
+      <button class="nav-link" data-page="settings"><span class="nav-ic">◆</span>Settings</button>
+    </div>
+
+    <div class="sidebar-foot">
+      <div class="status-widget"><span class="dot"></span>SYSTEM ONLINE</div>
+      <button class="theme-toggle" id="themeToggle" title="Toggle theme">
+        <span id="themeIcon">☾</span> <span id="themeLabel">Dark</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile tab bar -->
+  <nav class="tabbar">
+    <button class="tab-link active" data-page="home">Home</button>
+    <button class="tab-link" data-page="academics">Academics</button>
+    <button class="tab-link" data-page="projects">Projects</button>
+    <button class="tab-link" data-page="progress">Progress</button>
+    <button class="tab-link" data-page="settings">Settings</button>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- ===== HOME ===== -->
+    <section class="page active" id="page-home">
+      <header class="page-head">
+        <div>
+          <div class="eyebrow" id="homeGreeting">WELCOME BACK</div>
+          <h1 id="homeTitle">Home</h1>
+        </div>
+        <div class="stat-chip" id="dayCounter">DAY 000</div>
+      </header>
+
+      <div id="prepBanner" class="card prep-banner" hidden></div>
+
+      <div class="card engine-metrics-card">
+        <div class="card-head-row">
+          <div>
+            <div class="card-eyebrow">Engine metrics</div>
+            <h2>Trajectory pulse</h2>
+          </div>
+          <button class="btn btn-primary btn-sm" type="button" onclick="exportCalendarSchedule()">Export to iCal</button>
+        </div>
+        <canvas id="trajectoryTrendGraph" height="180"></canvas>
+      </div>
+
+      <div class="card tracking-core-card">
+        <div class="tracking-head-row">
+          <div class="breadcrumb-bar">
+            <button class="crumb active" id="crumb-month" data-viewport="month" type="button">All Months</button>
+            <button class="crumb" id="crumb-week" data-viewport="week" type="button">Selected Week</button>
+            <button class="crumb" id="crumb-day" data-viewport="day" type="button">Selected Day</button>
+          </div>
+          <div class="time-lock-badge">Runtime / Clock-Locked</div>
+        </div>
+
+        <div class="viewport-pane active" id="viewport-month">
+          <div class="month-picker-shell">
+            <div class="month-picker-actions">
+              <button class="month-nav-btn" id="monthPrevBtn" type="button" aria-label="Previous month">←</button>
+              <label class="month-picker-select-wrap" for="monthPickerSelect">
+                <select class="month-picker-select" id="monthPickerSelect"></select>
+              </label>
+              <button class="month-nav-btn" id="monthNextBtn" type="button" aria-label="Next month">→</button>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="monthCurrentBtn" type="button">Current month</button>
+          </div>
+          <div class="heatmap-grid" id="monthHeatmapGrid"></div>
+        </div>
+
+        <div class="viewport-pane" id="viewport-week">
+          <div class="three-prong-grid">
+            <div class="prong-card">
+              <div class="prong-title">Skill</div>
+              <div class="prong-body" id="weekSkillTracker"></div>
+            </div>
+            <div class="prong-card">
+              <div class="prong-title">Academic</div>
+              <div class="prong-body" id="weekAcademicTracker"></div>
+            </div>
+            <div class="prong-card">
+              <div class="prong-title">Project</div>
+              <div class="prong-body" id="weekProjectTracker"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="viewport-pane" id="viewport-day">
+          <div id="dayTaskChecklistContainer"></div>
+        </div>
+      </div>
+
+      <div class="home-dashboard-grid">
+        <div class="home-left-stack">
+          <div class="card current-week-card">
+            <div class="card-eyebrow">Current focus</div>
+            <h2 id="cwTitle">—</h2>
+            <div class="cw-due" id="cwDue">—</div>
+            <ul class="task-list" id="cwTasks"></ul>
+            <div class="home-academic-block">
+              <div class="card-eyebrow">Academic goals</div>
+              <div id="homeAcademicGoals"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="home-right-stack">
+          <div class="card">
+            <div class="card-eyebrow">Trajectory status</div>
+            <div class="ring-wrap">
+              <svg viewBox="0 0 120 120" class="ring">
+                <circle cx="60" cy="60" r="52" class="ring-track"/>
+                <circle cx="60" cy="60" r="52" class="ring-fill" id="ringFill"/>
+              </svg>
+              <div class="ring-center">
+                <div class="ring-pct" id="ringPct">0%</div>
+                <div class="ring-label">complete</div>
+              </div>
+            </div>
+            <div class="mini-stats">
+              <div><span id="statDone">0</span><label>weeks done</label></div>
+              <div><span id="statMissed">0</span><label>weeks missed</label></div>
+              <div><span id="statYear">1</span><label>current year</label></div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-eyebrow">The track</div>
+            <div class="track" id="track"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card full-width-card">
+        <div class="card-eyebrow">Coming up next</div>
+        <ul class="upcoming-list" id="upcomingList"></ul>
+      </div>
+    </section>
+
+    <!-- ===== ACADEMICS ===== -->
+    <section class="page" id="page-academics">
+      <header class="page-head">
+        <div>
+          <div class="eyebrow-pill">SEMESTER-AWARE SYLLABUS</div>
+          <h1>Academics</h1>
+        </div>
+      </header>
+
+      <div class="card week-focus-card">
+        <div class="sem-badge-row">
+          <div class="sem-badge" id="semBadge">S1</div>
+          <div>
+            <div style="font-weight:700;font-size:16px" id="semYearLabel">Year 1 · Semester 1</div>
+            <div class="sem-meta" id="semDateRange">—</div>
+          </div>
+        </div>
+        <div class="card-eyebrow" style="margin-top:16px">This week's academic goals</div>
+        <div class="week-goal-list" id="semGoalList"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-eyebrow">Full semester syllabus</div>
+        <div id="semSyllabusList"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-eyebrow">This week’s academic targets</div>
+        <div id="acWeeklySummary"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-eyebrow">Track weekly topic targets</div>
+        <div class="form-row">
+          <select class="field-input" id="acSemPick"></select>
+          <select class="field-input" id="acSubjectPick"></select>
+          <input class="field-input" id="acExamDate" type="date">
+          <input class="field-input" id="acTopics" placeholder="Weekly topic targets (comma separated)">
+          <button class="btn btn-primary" id="acAdd">Add subject</button>
+        </div>
+      </div>
+
+      <div id="acEmpty" class="card empty-state" hidden>
+        <div class="empty-title">No exam dates tracked yet</div>
+        <div class="empty-sub">Add a subject above with its exam date to get a countdown and a weekly revision checklist.</div>
+      </div>
+
+      <div id="acList" class="subject-grid"></div>
+    </section>
+
+    <!-- ===== PROJECTS (Mission Control style) ===== -->
+    <section class="page" id="page-projects">
+      <header class="page-head">
+        <div>
+          <div class="eyebrow-pill">ENGINEERING MODULE</div>
+          <h1>Project Ladder</h1>
+        </div>
+        <button class="btn btn-primary" id="newBuildBtn">+ New Build</button>
+      </header>
+
+      <div class="tabs-row" id="yearTabs">
+        <button class="tab-btn active" data-filter="all">Full Matrix</button>
+        <button class="tab-btn" data-filter="1">Year 1</button>
+        <button class="tab-btn" data-filter="2">Year 2</button>
+        <button class="tab-btn" data-filter="3">Year 3</button>
+        <button class="tab-btn" data-filter="4">Year 4</button>
+      </div>
+
+      <div id="phaseContainer"></div>
+    </section>
+
+    <!-- New Build modal -->
+    <div class="modal-overlay" id="newBuildModal" hidden>
+      <div class="modal-card">
+        <div class="modal-title">Log a custom build</div>
+        <label class="field-label">Project name</label>
+        <input class="field-input" id="nbName" placeholder="e.g. Personal CLI Toolkit">
+        <label class="field-label">Short description</label>
+        <input class="field-input" id="nbDesc" placeholder="One line about what it does">
+        <label class="field-label">Stack tags (comma separated)</label>
+        <input class="field-input" id="nbStack" placeholder="PYTHON, SQLITE">
+        <label class="field-label">Difficulty</label>
+        <select class="field-input" id="nbStars">
+          <option value="1">★☆☆☆☆☆</option>
+          <option value="2">★★☆☆☆☆</option>
+          <option value="3" selected>★★★☆☆☆</option>
+          <option value="4">★★★★☆☆</option>
+          <option value="5">★★★★★☆</option>
+          <option value="6">★★★★★★</option>
+        </select>
+        <div class="modal-actions">
+          <button class="btn btn-ghost btn-block" id="nbCancel">Cancel</button>
+          <button class="btn btn-primary btn-block" id="nbSave">Add build</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PROGRESS ===== -->
+    <section class="page" id="page-progress">
+      <header class="page-head">
+        <div>
+          <div class="eyebrow">THE LONG VIEW</div>
+          <h1>Progress</h1>
+        </div>
+      </header>
+
+      <div class="grid-3" id="yearBars"></div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-eyebrow">DSA problems</div>
+          <div class="big-number" id="dsaBigNumber">0</div>
+          <div class="pc-desc" id="dsaTargetLine">Target so far: 0</div>
+          <div class="form-row" style="margin-top:14px">
+            <input class="field-input" type="number" id="dsaInput" min="0" placeholder="Update total solved">
+            <button class="btn btn-primary" id="dsaSave">Save</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-eyebrow">Milestones — current year</div>
+          <ul class="milestone-list" id="milestoneList"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SETTINGS ===== -->
+    <section class="page" id="page-settings">
+      <header class="page-head">
+        <div>
+          <div class="eyebrow">PROFILE &amp; DATA</div>
+          <h1>Settings</h1>
+        </div>
+      </header>
+
+      <div class="card">
+        <div class="card-eyebrow">Profile</div>
+        <label class="field-label">Name</label>
+        <input class="field-input" id="stName" type="text">
+        <label class="field-label">Course start date</label>
+        <input class="field-input" id="stDate" type="date">
+        <button class="btn btn-primary" id="stSave" style="margin-top:14px">Save profile</button>
+      </div>
+
+      <div class="card">
+        <div class="card-eyebrow">Appearance</div>
+        <div class="theme-picker" id="themePicker">
+          <button type="button" class="theme-swatch" data-theme="lavender"><span></span>Nocturne Lavender</button>
+          <button type="button" class="theme-swatch" data-theme="auric"><span></span>Graphite Brass</button>
+          <button type="button" class="theme-swatch" data-theme="tide"><span></span>Cobalt Slate</button>
+          <button type="button" class="theme-swatch" data-theme="orchid"><span></span>Soft Orchid</button>
+        </div>
+        <p class="pc-desc theme-help">Choose a complete colour system. Your selection is saved locally.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-eyebrow">GitHub pulse</div>
+        <p class="pc-desc">Connect a public GitHub username to bring repositories and public activity into your dashboard. No token is stored.</p>
+        <div class="form-row" style="margin-top:14px">
+          <input class="field-input" id="ghUsername" placeholder="GitHub username">
+          <button class="btn btn-primary" id="ghSync">Sync GitHub</button>
+        </div>
+        <div class="github-summary" id="ghSummary"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-eyebrow">Live time authentication</div>
+        <p class="pc-desc" id="stTimeStatus">—</p>
+        <button class="btn btn-ghost" id="stResync">Re-sync now</button>
+      </div>
+
+      <div class="card">
+        <div class="card-eyebrow">Local database</div>
+        <p class="pc-desc">Your data lives in this browser's storage only. Export a backup regularly, and re-import it any time — including on a different device.</p>
+        <div class="cw-actions">
+          <button class="btn btn-ghost" id="stExport">Export backup (.json)</button>
+          <button class="btn btn-ghost" id="stImport" type="button">Import backup JSON</button>
+        </div>
+        <div class="history-head"><span>Recent versions</span><button class="text-btn" id="stClearHistory" type="button">Clear history</button></div>
+        <div id="historyList" class="history-list"></div>
+      </div>
+
+      <div class="card danger-card">
+        <div class="card-eyebrow">Danger zone</div>
+        <p class="pc-desc">This permanently erases your profile, schedule progress and subjects from this browser.</p>
+        <button class="btn btn-danger" id="stReset">Reset all data</button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
