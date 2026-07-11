@@ -8,7 +8,7 @@ const DB_VERSION = 3;
 
 const DEFAULT_DB = window.DEFAULT_DB || {
   profile: { name: "", startDate: "", createdAt: "" },
-  settings: { theme: "lavender" },
+  settings: { theme: "lavender", college: "hitk" },
   schedule: { currentIndex: 0, offsetDays: 0, weekStatus: {}, weekTaskDone: {} },
   academics: { subjects: [] },
   projects: { shipped: {}, started: {}, meta: {}, custom: [] },
@@ -26,6 +26,7 @@ let projectsFilter = "all";
 let activeTrackingViewport = "month";
 let selectedTrackingMonthIndex = null;
 let selectedTrackingWeekIndex = null;
+let onboardCollege = "hitk";
 
 /* ---------------- storage ---------------- */
 function clone(obj){ return JSON.parse(JSON.stringify(obj)); }
@@ -86,7 +87,8 @@ function loadDB(){
       prep: Object.assign(clone(DEFAULT_DB.prep), parsed.prep),
       timeSync: Object.assign(clone(DEFAULT_DB.timeSync), parsed.timeSync),
       tracking: Object.assign(clone(DEFAULT_DB.tracking), parsed.tracking),
-      github: Object.assign(clone(DEFAULT_DB.github), parsed.github)
+      github: Object.assign(clone(DEFAULT_DB.github), parsed.github),
+      resume: Object.assign(clone(DEFAULT_DB.resume), parsed.resume)
     });
   }catch(e){ console.warn("DB load failed, using defaults", e); return clone(DEFAULT_DB); }
 }
@@ -629,10 +631,15 @@ function renderHome(){
     prepBanner.hidden = false;
     const doneCount = Object.keys(DB.prep.done).filter(k=>DB.prep.done[k]).length;
     prepBanner.innerHTML = `
-      <div class="card-eyebrow">${CURRICULUM.prep.title.toUpperCase()}</div>
-      <h2>Your course starts ${fmtLong(start)}</h2>
-      <div class="cw-due">${daysTo} day${daysTo===1?"":"s"} to get ahead · ${doneCount}/${CURRICULUM.prep.tasks.length} done</div>
-      <ul class="task-list">
+      <div class="sem-badge-row">
+        <div class="sem-badge">${daysTo}D</div>
+        <div>
+          <div style="font-weight:700;font-size:16px">Your course starts ${fmtLong(start)}</div>
+          <div class="sem-meta">${daysTo} day${daysTo===1?"":"s"} to get ahead · ${doneCount}/${CURRICULUM.prep.tasks.length} done</div>
+        </div>
+      </div>
+      <div class="card-eyebrow" style="margin-top:16px">${CURRICULUM.prep.title.toUpperCase()}</div>
+      <ul class="task-list prep-pills">
         ${CURRICULUM.prep.tasks.map((t,i)=>`
           <li class="${DB.prep.done[i]?'done':''}">
             <input type="checkbox" data-prep="${i}" ${DB.prep.done[i]?'checked':''}>
@@ -1049,11 +1056,357 @@ function renderProgress(){
     `<li>${label}<span>${val}</span></li>`).join("");
 }
 
+/* ---------------- RESUME BUILDER ---------------- */
+
+// Pull every shipped build (roadmap projects + custom builds) into one shape.
+function getShippedProjects(){
+  const fromRoadmap = MONTHS
+    .filter(mo => DB.projects.shipped[mo.globalIndex])
+    .map(mo => {
+      const meta = DB.projects.meta[mo.globalIndex] || {};
+      return {
+        name: mo.project, desc: mo.desc || "", stack: mo.stack || [],
+        repo: meta.repo || "", live: meta.live || "",
+        yearLabel: mo.yearLabel, monthName: mo.name, globalIndex: mo.globalIndex, custom: false
+      };
+    });
+  const fromCustom = (DB.projects.custom || [])
+    .filter(c => c.status === "shipped")
+    .map(c => ({ name: c.name, desc: c.desc || "", stack: c.stack || [], repo: "", live: "", yearLabel: "Custom", monthName: "", globalIndex: -1, custom: true }));
+  return [...fromRoadmap, ...fromCustom].sort((a,b)=>a.globalIndex - b.globalIndex);
+}
+
+function getInProgressProjects(){
+  const fromRoadmap = MONTHS
+    .filter(mo => DB.projects.started[mo.globalIndex] && !DB.projects.shipped[mo.globalIndex])
+    .map(mo => ({ name: mo.project, globalIndex: mo.globalIndex }));
+  const fromCustom = (DB.projects.custom || [])
+    .filter(c => c.status === "progress")
+    .map(c => ({ name: c.name, globalIndex: -1 }));
+  return [...fromRoadmap, ...fromCustom];
+}
+
+// Aggregate a clean, de-duplicated skill list from shipped + in-flight work.
+function getResumeSkills(){
+  const tags = new Set();
+  MONTHS.forEach(mo=>{
+    if(DB.projects.shipped[mo.globalIndex] || DB.projects.started[mo.globalIndex]){
+      (mo.stack||[]).forEach(t=>tags.add(t));
+    }
+  });
+  (DB.projects.custom || []).forEach(c=>{
+    if(c.status === "shipped" || c.status === "progress") (c.stack||[]).forEach(t=>tags.add(String(t).toUpperCase()));
+  });
+  return Array.from(tags);
+}
+
+// Parse the low end of a milestone string like "150–200 solved" or "6-8 deployed" -> 150 / 6
+function parseMilestoneFloor(val){
+  const match = String(val||"").match(/\d+/);
+  return match ? parseInt(match[0], 10) : null;
+}
+
+function currentYearAndWindow(){
+  const start = parseDate(DB.profile.startDate);
+  const idx = DB.schedule.currentIndex;
+  const curYearId = (start && WEEKS.length) ? WEEKS[Math.min(Math.max(idx,0), WEEKS.length-1)].yearId : 1;
+  const year = CURRICULUM.years.find(y=>y.id===curYearId) || CURRICULUM.years[0];
+  const yearStartWeek = (year.id - 1) * 48;
+  const yearEndDate = start ? weekDueDate(yearStartWeek + 47) : null;
+  return { year, yearEndDate };
+}
+
+// Build a prioritized, deadline-aware list of what to do before this resume is application-ready.
+function computeResumeReadiness(){
+  const items = [];
+  const shipped = getShippedProjects();
+  const inProgress = getInProgressProjects();
+  const { year, yearEndDate } = currentYearAndWindow();
+
+  inProgress.forEach(p=>{
+    let due = null;
+    if(p.globalIndex >= 0){
+      due = weekDueDate(p.globalIndex * 4 + 3); // due date of that month's final week
+    }
+    items.push({
+      priority: "high",
+      text: `Finish and ship "${p.name}" — mark it shipped once it's live so it can go straight on your resume.`,
+      due, dueLabel: due ? `Target: week of ${fmtShort(due)}` : "No fixed date — finish when ready"
+    });
+  });
+
+  if(year && Array.isArray(year.milestones)){
+    const projectMilestone = year.milestones.find(([label])=>/project/i.test(label));
+    const dsaMilestone = year.milestones.find(([label])=>/dsa/i.test(label));
+    if(projectMilestone){
+      const floor = parseMilestoneFloor(projectMilestone[1]);
+      if(floor && shipped.length < floor){
+        items.push({
+          priority: "medium",
+          text: `Ship ${floor - shipped.length} more project${floor - shipped.length===1?"":"s"} to hit the ${year.label} target of ${projectMilestone[1]} shipped builds.`,
+          due: yearEndDate, dueLabel: yearEndDate ? `By end of ${year.label}: ${fmtShort(yearEndDate)}` : `By end of ${year.label}`
+        });
+      }
+    }
+    if(dsaMilestone){
+      const floor = parseMilestoneFloor(dsaMilestone[1]);
+      if(floor && (DB.progress.dsaSolved||0) < floor){
+        items.push({
+          priority: "medium",
+          text: `Solve ${floor - (DB.progress.dsaSolved||0)} more DSA problems to reach the ${year.label} bar of ${dsaMilestone[1]} — a strong number to quote on your resume.`,
+          due: yearEndDate, dueLabel: yearEndDate ? `By end of ${year.label}: ${fmtShort(yearEndDate)}` : `By end of ${year.label}`
+        });
+      }
+    }
+  }
+
+  const missingLinks = shipped.filter(p=>!p.custom && !p.repo);
+  if(missingLinks.length){
+    items.push({
+      priority: "high",
+      text: `Add a repo link to ${missingLinks.length} shipped project${missingLinks.length===1?"":"s"} (${missingLinks.slice(0,3).map(p=>p.name).join(", ")}${missingLinks.length>3?"…":""}) so recruiters can see the code.`,
+      due: null, dueLabel: "Do this before you start applying"
+    });
+  }
+
+  if(!DB.github || !DB.github.profile){
+    items.push({ priority:"low", text:"Sync your GitHub profile in Settings — it feeds live repo activity into your portfolio story.", due:null, dueLabel:"Anytime" });
+  }
+
+  if(!DB.resume.email || !DB.resume.phone){
+    items.push({ priority:"high", text:"Add your email and phone number in the contact panel below — recruiters need a way to reach you.", due:null, dueLabel:"Before you export" });
+  }
+  if(!DB.resume.linkedin && !DB.resume.portfolio){
+    items.push({ priority:"low", text:"Add a LinkedIn or portfolio link — resumes with a live link get more callbacks.", due:null, dueLabel:"Before you export" });
+  }
+  if(!DB.resume.summary){
+    items.push({ priority:"low", text:"Write a 1–2 line summary describing what you build and what you're aiming for.", due:null, dueLabel:"Before you export" });
+  }
+  if(!shipped.length){
+    items.push({ priority:"high", text:"Ship your first project — even a small one gives you something concrete to put on the page.", due:null, dueLabel:"Start this week" });
+  }
+
+  const rank = { high:0, medium:1, low:2 };
+  return items.sort((a,b)=>{
+    if(a.due && b.due) return a.due - b.due;
+    if(a.due) return -1;
+    if(b.due) return 1;
+    return rank[a.priority]-rank[b.priority];
+  });
+}
+
+function buildResumeText(){
+  const p = DB.profile, r = DB.resume;
+  const college = COLLEGES[DB.settings.college]?.label || "";
+  const shipped = getShippedProjects();
+  const skills = getResumeSkills();
+  const lines = [];
+  lines.push((p.name || "Your Name").toUpperCase());
+  const contactBits = [r.email, r.phone, r.location, r.linkedin, r.portfolio].filter(Boolean);
+  if(contactBits.length) lines.push(contactBits.join(" · "));
+  if(r.targetRole) lines.push(`Target role: ${r.targetRole}`);
+  if(r.summary){ lines.push(""); lines.push(r.summary); }
+
+  lines.push("", "EDUCATION");
+  const sem = currentSemesterIndex()+1;
+  lines.push(`${college}${college?" — ":""}Semester ${sem}${DB.progress.dsaSolved ? ` · ${DB.progress.dsaSolved} DSA problems solved` : ""}`);
+
+  if(skills.length){
+    lines.push("", "SKILLS");
+    lines.push(skills.join(", "));
+  }
+
+  if(shipped.length){
+    lines.push("", "PROJECTS");
+    shipped.forEach(proj=>{
+      lines.push(`${proj.name}${proj.stack.length ? ` (${proj.stack.join(", ")})` : ""}`);
+      if(proj.desc) lines.push(`  ${proj.desc}`);
+      const links = [proj.repo ? `Repo: ${proj.repo}` : "", proj.live ? `Live: ${proj.live}` : ""].filter(Boolean).join("  ·  ");
+      if(links) lines.push(`  ${links}`);
+    });
+  }
+
+  if(DB.github && DB.github.profile){
+    lines.push("", "GITHUB");
+    lines.push(`@${DB.github.profile.login} — ${DB.github.profile.publicRepos} public repos, ${DB.github.profile.followers} followers (${DB.github.profile.url})`);
+  }
+
+  return lines.join("\n");
+}
+
+// Build a standalone, print-ready HTML document replicating the Jake's Resume layout,
+// set in Computer Modern Serif, populated from tracked data. Used for PDF export via window.print().
+function buildJakesResumeHTML(){
+  const r = DB.resume;
+  const p = DB.profile;
+  const skills = getResumeSkills();
+  const shipped = getShippedProjects();
+  const college = (window.COLLEGES && window.COLLEGES[DB.settings.college])
+    ? window.COLLEGES[DB.settings.college].label
+    : (DB.settings.college || "University");
+
+  const esc = (str) => String(str||"")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const bareUrl = (u) => esc(String(u||"").replace(/^https?:\/\//, ""));
+
+  const contactBits = [];
+  if(r.phone) contactBits.push(esc(r.phone));
+  if(r.email) contactBits.push(`<a href="mailto:${esc(r.email)}">${esc(r.email)}</a>`);
+  if(r.linkedin) contactBits.push(`<a href="${esc(r.linkedin)}">${bareUrl(r.linkedin)}</a>`);
+  if(r.portfolio) contactBits.push(`<a href="${esc(r.portfolio)}">${bareUrl(r.portfolio)}</a>`);
+
+  const projectsHTML = shipped.map(proj => `
+    <div class="jr-item">
+      <div class="jr-row">
+        <span class="jr-left"><span class="jr-bold">${esc(proj.name)}</span>${proj.stack.length ? ` <span class="jr-emph">| ${esc(proj.stack.join(", "))}</span>` : ""}</span>
+        <span class="jr-right">${[proj.repo ? `<a href="${esc(proj.repo)}">Repo</a>` : "", proj.live ? `<a href="${esc(proj.live)}">Live</a>` : ""].filter(Boolean).join(" | ")}</span>
+      </div>
+      <ul class="jr-bullets">
+        <li>${esc(proj.desc || "Developed full-stack application logic and architecture.")}</li>
+      </ul>
+    </div>`).join("");
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>${esc(p.name || "Resume")}</title>
+<link href="https://cdn.jsdelivr.net/gh/vsalvino/computer-modern@main/fonts/serif.css" rel="stylesheet">
+<style>
+  @page{ size:letter; margin:0.6in; }
+  *{ box-sizing:border-box; }
+  body{
+    font-family:"Computer Modern Serif", "CMU Serif", Georgia, serif;
+    color:#000; font-size:11pt; line-height:1.35; margin:0; padding:0.6in;
+    max-width:8.5in;
+  }
+  a{ color:#000; text-decoration:underline; }
+  .jr-header{ text-align:center; margin-bottom:10pt; }
+  .jr-name{ font-size:26pt; font-weight:700; font-variant-caps:small-caps; letter-spacing:0.5px; }
+  .jr-contact{ font-size:10pt; margin-top:4pt; }
+  .jr-contact span{ margin:0 4pt; }
+  section{ margin-top:2pt; }
+  h2{
+    font-size:12.5pt; font-variant-caps:small-caps; font-weight:700; letter-spacing:0.5px;
+    border-bottom:1px solid #000; padding-bottom:1pt; margin:10pt 0 5pt;
+  }
+  .jr-item{ margin-bottom:6pt; }
+  .jr-row{ display:flex; justify-content:space-between; align-items:baseline; gap:10pt; }
+  .jr-left{ text-align:left; }
+  .jr-right{ text-align:right; white-space:nowrap; }
+  .jr-bold{ font-weight:700; }
+  .jr-emph{ font-style:italic; font-weight:400; }
+  .jr-sub .jr-left, .jr-sub .jr-right{ font-style:italic; font-size:10.3pt; }
+  .jr-bullets{ margin:2pt 0 0 14pt; padding:0; }
+  .jr-bullets li{ font-size:10.3pt; margin-bottom:1pt; }
+  .jr-skills{ font-size:10.3pt; }
+  .jr-skills b{ font-weight:700; }
+  @media print{ body{ padding:0; } }
+</style>
+</head>
+<body>
+  <div class="jr-header">
+    <div class="jr-name">${esc(p.name || "Your Name")}</div>
+    <div class="jr-contact">${contactBits.join(" <span>|</span> ")}</div>
+  </div>
+
+  <section>
+    <h2>Education</h2>
+    <div class="jr-item">
+      <div class="jr-row"><span class="jr-left jr-bold">${esc(college)}</span><span class="jr-right"></span></div>
+      <div class="jr-row jr-sub"><span class="jr-left">Bachelor of Technology (or Equivalent)</span><span class="jr-right"></span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Experience</h2>
+    <div class="jr-item">
+      <div class="jr-row"><span class="jr-left jr-bold">Trajectory Tracked Builder</span><span class="jr-right">Current</span></div>
+      <div class="jr-row jr-sub"><span class="jr-left">Continuous Engineering Roadmap</span><span class="jr-right"></span></div>
+      <ul class="jr-bullets">
+        <li>Solved ${DB.progress.dsaSolved || 0} Data Structures and Algorithms problems</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>Projects</h2>
+    ${projectsHTML || `<div class="jr-item">No shipped projects yet.</div>`}
+  </section>
+
+  <section>
+    <h2>Technical Skills</h2>
+    <div class="jr-skills"><b>Languages &amp; Frameworks:</b> ${esc(skills.join(", "))}</div>
+  </section>
+</body>
+</html>`;
+}
+
+
+
+function renderResumeChecklist(){
+  const host = document.getElementById("resumeChecklist");
+  if(!host) return;
+  const items = computeResumeReadiness();
+  host.innerHTML = items.length
+    ? items.map(item=>`
+        <div class="resume-check-item ${item.priority}">
+          <span class="resume-check-dot"></span>
+          <div class="resume-check-body">
+            <div class="resume-check-text">${item.text}</div>
+            <div class="resume-check-due">${item.dueLabel}</div>
+          </div>
+        </div>`).join("")
+    : `<div class="empty-sub">Your resume looks solid — nothing outstanding right now.</div>`;
+}
+
+function renderResume(){
+  const r = DB.resume;
+  ["email","phone","location","linkedin","portfolio","targetRole","summary"].forEach(key=>{
+    const el = document.getElementById("rs"+key.charAt(0).toUpperCase()+key.slice(1));
+    if(el) el.value = r[key] || "";
+  });
+
+  const skills = getResumeSkills();
+  const skillsHost = document.getElementById("resumeSkills");
+  if(skillsHost){
+    skillsHost.innerHTML = skills.length
+      ? skills.map(s=>`<span class="pc-tag">${s}</span>`).join("")
+      : `<div class="empty-sub">Ship or start a project to build up your skills list automatically.</div>`;
+  }
+
+  const shipped = getShippedProjects();
+  const projHost = document.getElementById("resumeProjectsList");
+  if(projHost){
+    projHost.innerHTML = shipped.length
+      ? shipped.map(proj=>`
+          <div class="subject-card">
+            <h3>${proj.name}</h3>
+            <div class="pc-desc">${proj.desc || ""}</div>
+            <div class="pc-stack">${(proj.stack||[]).map(t=>`<span class="pc-tag">${t}</span>`).join("")}</div>
+            <div class="pc-meta">${proj.repo ? `<a href="${proj.repo}" target="_blank" rel="noopener">Repo ↗</a>` : "No repo linked"}${proj.live ? ` · <a href="${proj.live}" target="_blank" rel="noopener">Live ↗</a>` : ""}</div>
+          </div>`).join("")
+      : `<div class="empty-sub">No shipped projects yet — mark a build "SHIPPED" on the Projects page and it will land here.</div>`;
+  }
+
+  renderResumeChecklist();
+
+  const preview = document.getElementById("resumePreviewText");
+  if(preview) preview.textContent = buildResumeText();
+}
+
 /* ---------------- RENDER: SETTINGS ---------------- */
+function renderOnboardCollegePicker(){
+  const sel = document.getElementById("obCollege");
+  if(sel) sel.value = onboardCollege;
+}
+
 function renderSettings(){
   document.getElementById("stName").value = DB.profile.name || "";
   document.getElementById("stDate").value = DB.profile.startDate || "";
   document.querySelectorAll(".theme-swatch").forEach(btn=>btn.classList.toggle("active", btn.dataset.theme === DB.settings.theme));
+  const collegeSel = document.getElementById("collegePicker");
+  if(collegeSel) collegeSel.value = DB.settings.college || "hitk";
   const ghInput = document.getElementById("ghUsername");
   const ghSummary = document.getElementById("ghSummary");
   if(ghInput) ghInput.value = DB.github?.username || "";
@@ -1085,7 +1438,7 @@ function renderSettings(){
 }
 
 function renderAll(){
-  renderHome(); renderAcademics(); renderProjects(); renderProgress(); renderSettings();
+  renderHome(); renderAcademics(); renderProjects(); renderProgress(); renderResume(); renderSettings();
 }
 
 /* ---------------- theme ---------------- */
@@ -1102,11 +1455,15 @@ function applyTheme(){
 /* ---------------- init & events ---------------- */
 function init(){
   DB = loadDB();
+  setActiveCollege(DB.settings.college || "hitk");
   const built = buildScheduleData();
   WEEKS = built.weeks; MONTHS = built.months;
   applyTheme();
   tickClock();
   setInterval(tickClock, 1000);
+
+  onboardCollege = DB.settings.college || "hitk";
+  renderOnboardCollegePicker();
 
   if(!DB.profile.name || !DB.profile.startDate){
     document.getElementById("onboardOverlay").hidden = false;
@@ -1121,6 +1478,10 @@ function init(){
   syncTime();
   setInterval(syncTime, 5*60*1000);
 
+  document.getElementById("obCollege").addEventListener("change", (e)=>{
+    onboardCollege = e.target.value;
+  });
+
   document.getElementById("obSubmit").addEventListener("click", ()=>{
     const name = document.getElementById("obName").value.trim();
     const date = document.getElementById("obDate").value;
@@ -1128,6 +1489,8 @@ function init(){
     DB.profile.name = name;
     DB.profile.startDate = date;
     DB.profile.createdAt = new Date().toISOString();
+    DB.settings.college = onboardCollege || "hitk";
+    setActiveCollege(DB.settings.college);
     saveDB();
     document.getElementById("onboardOverlay").hidden = true;
     document.getElementById("app").hidden = false;
@@ -1151,6 +1514,26 @@ function init(){
     DB.settings.theme = btn.dataset.theme;
     saveDB("Theme changed"); applyTheme(); renderSettings();
   }));
+  document.getElementById("collegePicker").addEventListener("change", (e)=>{
+    const key = e.target.value;
+    if(key === (DB.settings.college || "hitk")) return;
+    const prevKey = DB.settings.college || "hitk";
+    openDialog({
+      eyebrow: "SWITCH COLLEGE",
+      title: `Switch academics to ${COLLEGES[key]?.label || key}?`,
+      copy: "This swaps the semester syllabus and subject list app-wide. Your roadmap, projects and DSA progress are unaffected, but any subjects you've already added under Academics were built for the previous college and won't match the new syllabus — you may want to remove and re-add them.",
+      confirmLabel: "Switch college",
+      onConfirm: ()=>{
+        DB.settings.college = key;
+        setActiveCollege(key);
+        saveDB("College changed");
+        populateAcademicPickers();
+        renderAll();
+        showNotice(`Academics switched to ${COLLEGES[key]?.label || key}.`, "success");
+      }
+    });
+    e.target.value = prevKey;
+  });
   document.getElementById("ghSync").addEventListener("click", async ()=>{
     const button = document.getElementById("ghSync");
     button.disabled = true; button.textContent = "Syncing…";
@@ -1224,6 +1607,86 @@ function init(){
     openDialog({ eyebrow:"VERSION HISTORY", title:"Clear saved versions?", copy:"Your current database will remain, but all prior versions will be removed.", confirmLabel:"Clear history", danger:true, onConfirm:()=>{
       localStorage.removeItem(HISTORY_KEY); renderSettings(); showNotice("Saved versions cleared.", "success");
     }});
+  });
+
+  document.getElementById("rsSave").addEventListener("click", ()=>{
+    ["email","phone","location","linkedin","portfolio","targetRole","summary"].forEach(key=>{
+      const el = document.getElementById("rs"+key.charAt(0).toUpperCase()+key.slice(1));
+      if(el) DB.resume[key] = el.value.trim();
+    });
+    saveDB("Resume details updated");
+    renderResume();
+    showNotice("Resume details saved.", "success");
+  });
+
+  document.getElementById("rsCopy").addEventListener("click", async ()=>{
+    try{
+      await navigator.clipboard.writeText(buildResumeText());
+      showNotice("Resume copied to clipboard.", "success");
+    }catch(err){
+      showNotice("Couldn't copy automatically — select the text and copy manually.", "error");
+    }
+  });
+
+  document.getElementById("rsDownloadTxt").addEventListener("click", ()=>{
+    const blob = new Blob([buildResumeText()], { type:"text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `${(DB.profile.name||"resume").replace(/\s+/g,"_")}-resume.txt`;
+    a.click(); URL.revokeObjectURL(url);
+  });
+
+  document.getElementById("rsDownloadMd").addEventListener("click", ()=>{
+    const r = DB.resume;
+    const skills = getResumeSkills();
+    const shipped = getShippedProjects();
+    const college = COLLEGES[DB.settings.college]?.label || "";
+    const sem = currentSemesterIndex()+1;
+    let md = `# ${DB.profile.name || "Your Name"}\n\n`;
+    const contactBits = [r.email, r.phone, r.location, r.linkedin, r.portfolio].filter(Boolean);
+    if(contactBits.length) md += `${contactBits.join(" · ")}\n\n`;
+    if(r.targetRole) md += `**Target role:** ${r.targetRole}\n\n`;
+    if(r.summary) md += `${r.summary}\n\n`;
+    md += `## Education\n${college}${college?" — ":""}Semester ${sem}${DB.progress.dsaSolved ? ` · ${DB.progress.dsaSolved} DSA problems solved` : ""}\n\n`;
+    if(skills.length) md += `## Skills\n${skills.join(", ")}\n\n`;
+    if(shipped.length){
+      md += `## Projects\n`;
+      shipped.forEach(proj=>{
+        md += `**${proj.name}**${proj.stack.length ? ` — ${proj.stack.join(", ")}` : ""}\n`;
+        if(proj.desc) md += `${proj.desc}\n`;
+        const links = [proj.repo ? `[Repo](${proj.repo})` : "", proj.live ? `[Live](${proj.live})` : ""].filter(Boolean).join(" · ");
+        if(links) md += `${links}\n`;
+        md += `\n`;
+      });
+    }
+    if(DB.github && DB.github.profile){
+      md += `## GitHub\n[@${DB.github.profile.login}](${DB.github.profile.url}) — ${DB.github.profile.publicRepos} public repos, ${DB.github.profile.followers} followers\n`;
+    }
+    const blob = new Blob([md], { type:"text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `${(DB.profile.name||"resume").replace(/\s+/g,"_")}-resume.md`;
+    a.click(); URL.revokeObjectURL(url);
+  });
+
+  document.getElementById("rsExportPdf")?.addEventListener("click", ()=>{
+    const html = buildJakesResumeHTML();
+    const win = window.open("", "_blank");
+    if(!win){
+      showNotice("Couldn't open the export window — check your browser's pop-up blocker.", "error");
+      return;
+    }
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+    const triggerPrint = ()=>{ win.focus(); win.print(); };
+    if(win.document.fonts && win.document.fonts.ready){
+      win.document.fonts.ready.then(triggerPrint).catch(triggerPrint);
+    } else {
+      win.onload = triggerPrint;
+    }
+    // Fallback in case font loading hangs
+    setTimeout(triggerPrint, 1500);
   });
 
   document.querySelectorAll("#yearTabs .tab-btn").forEach(b=>{

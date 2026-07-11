@@ -47,6 +47,13 @@ window.addEventListener('error', function(e){
     <label class="field-label" for="obDate">Course start date</label>
     <input class="field-input" id="obDate" type="date">
 
+    <label class="field-label" for="obCollege">Your college</label>
+    <select class="field-input" id="obCollege">
+      <option value="hitk">HITK IT</option>
+      <option value="juit">JUIT CSE</option>
+    </select>
+    <p class="pc-desc theme-help">Sets your semester syllabus and subject list. Change it later anytime in Settings.</p>
+
     <button class="btn btn-primary btn-block" id="obSubmit">Begin trajectory</button>
     <div class="onboard-note">Everything is stored locally in this browser — nothing leaves your device.</div>
   </div>
@@ -72,11 +79,12 @@ window.addEventListener('error', function(e){
     </div>
 
     <div class="nav-links">
-      <button class="nav-link active" data-page="home"><span class="nav-ic">◆</span>Home</button>
-      <button class="nav-link" data-page="academics"><span class="nav-ic">◆</span>Academics</button>
-      <button class="nav-link" data-page="projects"><span class="nav-ic">◆</span>Projects</button>
-      <button class="nav-link" data-page="progress"><span class="nav-ic">◆</span>Progress</button>
-      <button class="nav-link" data-page="settings"><span class="nav-ic">◆</span>Settings</button>
+      <button class="nav-link active" data-page="home">Home</button>
+      <button class="nav-link" data-page="academics">Academics</button>
+      <button class="nav-link" data-page="projects">Projects</button>
+      <button class="nav-link" data-page="progress">Progress</button>
+      <button class="nav-link" data-page="resume">Resume</button>
+      <button class="nav-link" data-page="settings">Settings</button>
     </div>
 
     <div class="sidebar-foot">
@@ -93,6 +101,7 @@ window.addEventListener('error', function(e){
     <button class="tab-link" data-page="academics">Academics</button>
     <button class="tab-link" data-page="projects">Projects</button>
     <button class="tab-link" data-page="progress">Progress</button>
+    <button class="tab-link" data-page="resume">Resume</button>
     <button class="tab-link" data-page="settings">Settings</button>
   </nav>
 
@@ -109,7 +118,7 @@ window.addEventListener('error', function(e){
         <div class="stat-chip" id="dayCounter">DAY 000</div>
       </header>
 
-      <div id="prepBanner" class="card prep-banner" hidden></div>
+      <div id="prepBanner" class="card week-focus-card" hidden></div>
 
       <div class="card engine-metrics-card">
         <div class="card-head-row">
@@ -341,6 +350,82 @@ window.addEventListener('error', function(e){
       </div>
     </section>
 
+    <!-- ===== RESUME BUILDER ===== -->
+    <section class="page" id="page-resume">
+      <header class="page-head">
+        <div>
+          <div class="eyebrow">AUTO-BUILT FROM YOUR PROGRESS</div>
+          <h1>Resume</h1>
+        </div>
+      </header>
+
+      <div class="card">
+        <div class="card-eyebrow">Resume readiness</div>
+        <h2>What to finish before you export</h2>
+        <p class="pc-desc">Generated from your shipped builds, DSA count and year milestones — with deadlines where one makes sense.</p>
+        <div class="resume-check-list" id="resumeChecklist"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-eyebrow">Contact &amp; positioning</div>
+        <div class="form-grid-2">
+          <div>
+            <label class="field-label" for="rsEmail">Email</label>
+            <input class="field-input" id="rsEmail" type="email" placeholder="you@example.com">
+          </div>
+          <div>
+            <label class="field-label" for="rsPhone">Phone</label>
+            <input class="field-input" id="rsPhone" type="text" placeholder="+91 …">
+          </div>
+          <div>
+            <label class="field-label" for="rsLocation">Location</label>
+            <input class="field-input" id="rsLocation" type="text" placeholder="City, Country">
+          </div>
+          <div>
+            <label class="field-label" for="rsTargetRole">Target role</label>
+            <input class="field-input" id="rsTargetRole" type="text" placeholder="e.g. Backend Engineer Intern">
+          </div>
+          <div>
+            <label class="field-label" for="rsLinkedin">LinkedIn</label>
+            <input class="field-input" id="rsLinkedin" type="text" placeholder="linkedin.com/in/you">
+          </div>
+          <div>
+            <label class="field-label" for="rsPortfolio">Portfolio / website</label>
+            <input class="field-input" id="rsPortfolio" type="text" placeholder="you.dev">
+          </div>
+        </div>
+        <label class="field-label" for="rsSummary" style="margin-top:14px">Summary (1–2 lines)</label>
+        <textarea class="field-input" id="rsSummary" rows="3" placeholder="e.g. CS undergrad who builds full-stack projects end to end, currently focused on backend systems and DSA."></textarea>
+        <button class="btn btn-primary" id="rsSave" style="margin-top:14px">Save details</button>
+      </div>
+
+      <div class="card">
+        <div class="card-eyebrow">Skills (auto-detected)</div>
+        <div class="pc-stack" id="resumeSkills"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-eyebrow">Shipped projects on this resume</div>
+        <div class="subject-grid" id="resumeProjectsList"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-head-row">
+          <div>
+            <div class="card-eyebrow">Live preview</div>
+            <h2>Plain-text resume</h2>
+          </div>
+          <div class="cw-actions">
+            <button class="btn btn-ghost btn-sm" id="rsCopy" type="button">Copy</button>
+            <button class="btn btn-ghost btn-sm" id="rsDownloadTxt" type="button">Download .txt</button>
+            <button class="btn btn-ghost btn-sm" id="rsDownloadMd" type="button">Download .md</button>
+            <button class="btn btn-primary btn-sm" id="rsExportPdf" type="button">Export PDF</button>
+          </div>
+        </div>
+        <pre class="resume-preview" id="resumePreviewText"></pre>
+      </div>
+    </section>
+
     <!-- ===== SETTINGS ===== -->
     <section class="page" id="page-settings">
       <header class="page-head">
@@ -368,6 +453,15 @@ window.addEventListener('error', function(e){
           <button type="button" class="theme-swatch" data-theme="orchid"><span></span>Soft Orchid</button>
         </div>
         <p class="pc-desc theme-help">Choose a complete colour system. Your selection is saved locally.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-eyebrow">Institution</div>
+        <select class="field-input" id="collegePicker" style="margin-top:8px">
+          <option value="hitk">HITK IT</option>
+          <option value="juit">JUIT CSE</option>
+        </select>
+        <p class="pc-desc theme-help">Switches the semester syllabus and subjects app-wide. Your roadmap and projects stay the same.</p>
       </div>
 
       <div class="card">

@@ -92,10 +92,8 @@ input,select{ font-family:inherit; }
   font-size:14px; font-weight:500; padding:10px 12px; border-radius:var(--radius-sm);
   text-align:left; transition: background .15s, color .15s;
 }
-.nav-ic{ color:var(--accent); font-size:8px; opacity:.5; }
 .nav-link:hover{ background:var(--surface-2); color:var(--text); }
 .nav-link.active{ background:var(--accent-dim); color:var(--text); }
-.nav-link.active .nav-ic{ opacity:1; }
 
 .sidebar-foot{ padding-top:12px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:8px; }
 .theme-toggle{
@@ -164,6 +162,19 @@ input[type="date"].field-input::-webkit-calendar-picker-indicator{ cursor:pointe
 html.orchid input[type="date"].field-input::-webkit-calendar-picker-indicator{ filter:none; }
 .form-row{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
 .form-row .field-input{ flex:1; min-width:160px; }
+.form-grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:12px 14px; }
+@media (max-width:640px){ .form-grid-2{ grid-template-columns:1fr; } }
+
+/* ---------------- Resume builder ---------------- */
+.resume-check-list{ display:flex; flex-direction:column; gap:10px; margin-top:6px; }
+.resume-check-item{ display:flex; gap:10px; align-items:flex-start; padding:11px 12px; border-radius:var(--radius-sm); background:var(--surface-2); border:1px solid var(--border); }
+.resume-check-dot{ width:9px; height:9px; border-radius:50%; margin-top:5px; flex-shrink:0; background:var(--muted); }
+.resume-check-item.high .resume-check-dot{ background:var(--red); }
+.resume-check-item.medium .resume-check-dot{ background:var(--amber); }
+.resume-check-item.low .resume-check-dot{ background:var(--green); }
+.resume-check-text{ font-size:13.5px; line-height:1.45; }
+.resume-check-due{ font-family:var(--font-mono); font-size:11px; color:var(--accent-strong); margin-top:4px; letter-spacing:.03em; }
+.resume-preview{ white-space:pre-wrap; word-break:break-word; font-family:var(--font-mono); font-size:12.5px; line-height:1.6; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-sm); padding:16px; margin:0; max-height:520px; overflow:auto; }
 .checkbox-row{ display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); margin-top:12px; }
 .theme-picker{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; margin-top:8px; }
 .theme-swatch{ background:var(--surface-2); color:var(--muted); border:1px solid var(--border); border-radius:9px; padding:9px 7px; font-size:11px; display:flex; flex-direction:column; gap:6px; align-items:flex-start; }
@@ -201,8 +212,8 @@ html.orchid input[type="date"].field-input::-webkit-calendar-picker-indicator{ f
 .task-list li.done label{ text-decoration:line-through; color:var(--muted); }
 .cw-actions{ display:flex; gap:10px; flex-wrap:wrap; }
 
-.prep-banner{ border-color:var(--accent); background:var(--accent-dim); }
-.prep-banner .card-eyebrow{ color:var(--accent-strong); }
+.prep-pills{ flex-direction:row; flex-wrap:wrap; gap:10px; margin:12px 0 0; max-width:980px; }
+.prep-pills li{ border-radius:999px; padding:10px 14px; }
 
 /* ---------------- Home dashboard polish ---------------- */
 .card-head-row,

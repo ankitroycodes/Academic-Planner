@@ -4,7 +4,7 @@
 
 window.DEFAULT_DB = {
   profile: { name: "", startDate: "", createdAt: "" },
-  settings: { theme: "lavender" },
+  settings: { theme: "lavender", college: "hitk" },
   schedule: { currentIndex: 0, offsetDays: 0, weekStatus: {}, weekTaskDone: {} },
   academics: { subjects: [] },
   projects: { shipped: {}, started: {}, meta: {}, custom: [] },
@@ -12,7 +12,8 @@ window.DEFAULT_DB = {
   prep: { done: {} },
   timeSync: { offsetMs: 0, lastSynced: null, verified: false },
   tracking: { dailyLogs: {}, historicalPerformance: [] },
-  github: { username: "", profile: null, repos: [], events: [], lastSyncedAt: null }
+  github: { username: "", profile: null, repos: [], events: [], lastSyncedAt: null },
+  resume: { email: "", phone: "", location: "", linkedin: "", portfolio: "", targetRole: "", summary: "" }
 };
 
 const CURRICULUM = {
@@ -194,11 +195,11 @@ function buildCurriculumWeekBlueprints(){
 CURRICULUM.weeks = buildCurriculumWeekBlueprints();
 
 /* ============================================================
-   OFFICIAL B.TECH IT SYLLABUS — by semester
+   OFFICIAL B.TECH IT SYLLABUS — by semester, per college
    Each semester ≈ 6 months, 8 semesters across 4 years (aligned
    1:1 with the 48-month roadmap above — semesterIndex = floor(monthGlobalIndex/6))
    ============================================================ */
-const SYLLABUS = [
+const SYLLABUS_HITK = [
   { sem:1, year:1, subjects:[
     { name:"Physics-I", topics:["Central Forces","Oscillations and Vibrations","Wave Optics","Polarization","Quantum Mechanics","Schrödinger Equation","Particle in a Box"] },
     { name:"Mathematics-I", topics:["Matrices","Rank & Inverse","Eigenvalues & Eigenvectors","Vector Calculus","Gradient, Divergence, Curl","Differential Equations","Infinite Series","Multiple Integration","Green's, Gauss & Stokes Theorems"] },
@@ -260,6 +261,100 @@ const SYLLABUS = [
   ]}
 ];
 
+/* ============================================================
+   JUIT SOLAN — B.TECH CSE/IT SYLLABUS — by semester
+   ============================================================ */
+const SYLLABUS_JUIT = [
+  { sem:1, year:1, subjects:[
+    { name:"Mathematics-1", topics:["Matrices, Rank & Inverse","Eigenvalues & Eigenvectors","Differential Equations","Infinite Series","Multiple Integration","Vector Calculus"] },
+    { name:"Physics-1 & Physics Lab-1", topics:["Central Forces & Oscillations","Wave Optics","Polarization","Quantum Mechanics Basics","Experimental Verification"] },
+    { name:"Software Development Fundamentals-I & Lab", topics:["SDLC & Problem Solving","Flowcharts & Pseudocode","C Data Types & Operators","Control Flow (if-else, loops, switch)","1D/2D Arrays","Pointer Arithmetic","Dynamic Memory Allocation","Functions & Recursion","Structures & Unions","File Handling"] },
+    { name:"Basic Electronics & Lab", topics:["Electronic Devices","Circuit Fundamentals","Laboratory Instrumentation"] },
+    { name:"English", topics:["Language Proficiency","Vocabulary","Introductory Communication Skills"] },
+    { name:"Workshop", topics:["Practical Engineering Trades","Hand Tools","Workshop Safety Practices"] }
+  ]},
+  { sem:2, year:1, subjects:[
+    { name:"Mathematics-2", topics:["Advanced Calculus","Linear Algebra","Differential Equations"] },
+    { name:"Physics-2 & Physics Lab-2", topics:["Advanced Physics Topics","Experimental Setups"] },
+    { name:"Software Development Fundamentals-II & Lab", topics:["Procedural vs OOP","Classes, Objects & Memory Representation","Constructors & Destructors","Function/Operator Overloading","Static & Friend Functions","Inheritance (private/public/multiple)","Virtual & Pure Virtual Functions","Abstract Classes & RTTI","UML Class Diagrams","Exception Handling","Templates & STL","Linked Lists, Stacks, Queues","Recursion (Tower of Hanoi, N-Queen, Rat in Maze)"] },
+    { name:"Life Skills & Professional Communication Lab", topics:["Soft Skills","Career Orientation","Verbal & Non-verbal Communication"] },
+    { name:"Engineering Drawing & Design", topics:["Geometric Construction","Orthographic Projections","CAD Foundations"] },
+    { name:"Universal Human Values (UHV)", topics:["Ethics","Self-exploration","Value Education"] }
+  ]},
+  { sem:3, year:2, subjects:[
+    { name:"Mathematical Foundations for AI and Data Science", topics:["Discrete Structures","Probability","Matrices","Linear Algebra for AI"] },
+    { name:"Theory of Computation", topics:["DFA/NFA & State Minimization","Moore & Mealy Machines","Context-Free Grammars & Parse Trees","Chomsky & Greibach Normal Forms","Pushdown Automata","Top-down & Bottom-up Parsing","Turing Machines","Halting Problem","Decidability & P vs NP","NP-Completeness & Reducibility"] },
+    { name:"Data Structures & Lab", topics:["Arrays, Linked Lists, Stacks, Queues","Sparse Matrices via Multi-linked Lists","Hashing (Chaining, Probing)","Merge/Quick/Radix/Bucket/Count Sort","K-ary & Threaded Binary Trees","Binary, Binomial & Fibonacci Heaps","BST, AVL, Red-Black, B & B+ Trees","Graph Traversals (BFS/DFS)","Shortest Path & MST","Tries, Suffix Trees & Arrays"] },
+    { name:"Database Management Systems & Lab", topics:["ER Diagrams & Constraints","Relational Algebra","SQL & PL/SQL","Stored Procedures, Functions, Cursors, Triggers","Normalization (2NF, 3NF, BCNF)","ACID Properties & Concurrency Control","Locking, Deadlocks & Recovery","Grant/Revoke Security"] },
+    { name:"Unix Programming Lab", topics:["Command-line Interfaces (ls, cd, chmod)","Pipelines & I/O Redirection","grep, find & Process Control","Shell Scripting","System Calls (open, read, write, fork)","Directory Traversal","Networking (ping, ssh, scp)","tar & gzip"] },
+    { name:"Object Oriented Programming using Java", topics:["JVM & Garbage Collection","Overloading, Constructors & Strings","Abstract Classes, Packages & Interfaces","Exception Handling","Java Collections Framework","Multithreading","Generics & Wildcards","Reflection & Applets"] },
+    { name:"Economics", topics:["Microeconomics","Macroeconomics","Cost Analysis","Engineering Financial Applications"] },
+    { name:"Competitive Programming-I", topics:["Platform Onboarding (LeetCode, HackerRank)","Arrays & String Manipulation","Basic Recursion & Pointers","Logic Puzzles under Time Constraints"] },
+    { name:"Summer Training-I", topics:["4-week Foundational Industry Training"] }
+  ]},
+  { sem:4, year:2, subjects:[
+    { name:"Digital Systems and Computer Organization & Lab", topics:["K-maps & SOP/POS","Adders, Subtractors, Mux/Demux","Encoders, Decoders & Comparators","Latches & Flip-Flops (SR/JK/T/D)","Synchronous/Asynchronous Counters","RISC vs CISC & Addressing Modes","Instruction Cycle & ALU Design","Cache Mapping & Virtual Memory","Programmed, Interrupt-driven I/O & DMA"] },
+    { name:"Design and Analysis of Algorithms & Lab", topics:["Big-O, Omega, Theta & Recurrences","Divide & Conquer (Binary Search, Merge/Quick Sort, Strassen's)","Backtracking (N-Queens, Rat in Maze, Hamiltonian, TSP)","Greedy (Prim's/Kruskal's, Knapsack, Huffman)","Dynamic Programming (0/1 Knapsack, MCM, LCS)","String Matching (Rabin-Karp, KMP)","P vs NP, NP-Complete & NP-Hard"] },
+    { name:"Artificial Intelligence and Machine Learning & Lab", topics:["Agents, PEAS & State-Space Search","Uninformed & Heuristic Search (BFS, DFS, A*, AO*)","Supervised/Unsupervised/Reinforcement Learning","Linear & Logistic Regression","ANN (Perceptron, Backpropagation)","k-NN, SVM Kernels, Decision Trees, Random Forests","PCA & Dimensionality Reduction","CNN Architectures (LeNet, AlexNet, VGG, ResNet)"] },
+    { name:"Software Engineering", topics:["SDLC Methodologies","Requirements Engineering","Testing Architectures","Lifecycle Management"] },
+    { name:"Competitive Programming-II", topics:["Intermediate Algorithmic Implementations","Data Structure Mapping","Competitive Constraint Management"] },
+    { name:"Discipline Elective-1 & Lab", topics:["Data Analytics (R/Python)","Mobile App Development","Smart Systems & IoT","Compiler Design Intro","Data Engineering","Data Science Foundations","Artificial & Computational Intelligence"] },
+    { name:"Environmental Studies", topics:["Ecosystem Dynamics","Sustainability","Resource Management"] }
+  ]},
+  { sem:5, year:3, subjects:[
+    { name:"Operating Systems & Lab", topics:["Process Scheduling","Thread Safety & Synchronization","Memory Management & Paging","Virtual Memory","Disk Scheduling","File Allocation Methods"] },
+    { name:"Computer Networks & Lab", topics:["OSI & TCP/IP Architectures","Routing & Switching","Error Correction","Transport Protocols","Socket Programming"] },
+    { name:"Full Stack Development Lab", topics:["Modern Web Framework Setups","Front-end Styling","State Management","API Configuration","Back-end Database Orchestration"] },
+    { name:"Discipline Elective-2 & Lab", topics:["Soft Computing","Computer & Cyber Security","Data Mining & Warehousing","Agile Software Processes","IoT Analytics","Big Data Analytics","Search in AI","Intelligent Robotics"] },
+    { name:"Discipline Elective-3 & Lab", topics:["Image Processing & Computer Vision","Blockchain Technology","Computing for Data Science","Android Programming","Graph Theory","Computational Data Analysis","Embedded Software Development"] },
+    { name:"Science Elective", topics:["Natural/Physical Sciences integrated with Computing"] },
+    { name:"Indian Constitution & Traditional Knowledge", topics:["Civil Structure & Legal Fundamentals","Traditional Knowledge Roots"] },
+    { name:"Summer Training-II", topics:["6-week Industry/Research Training"] },
+    { name:"Competitive Programming-III", topics:["Advanced Optimizations","Advanced Trees & Graphs","Dynamic Programming Problem Tracking","Contest Strategies"] },
+    { name:"Logical and Quantitative Techniques-I", topics:["Analytical Thinking","Data Interpretation","Quantitative Aptitude"] }
+  ]},
+  { sem:6, year:3, subjects:[
+    { name:"Web Technology & Lab", topics:["Web Architectures","Server-side Frameworks","Web Security Primitives","Dynamic Content Serving"] },
+    { name:"Advanced Data Structures and Algorithms & Lab", topics:["Network Optimization Schemes","Advanced Hashing","Non-linear Geometric Spaces","Approximation Methodologies"] },
+    { name:"Flexi Core Option", topics:["Distributed and Cloud Computing OR Information Security and Cryptography"] },
+    { name:"Discipline Elective-4", topics:["Deep Learning","Cryptocurrency Technologies","Information Retrieval & Semantic Web","Cloud Essentials (Azure/AWS)","Reinforcement Learning","Responsible AI & Ethics"] },
+    { name:"Discipline Elective-5", topics:["Machine Learning & Big Data","Secure Software System Design","Fog/Edge Computing","Statistical Analysis","Time Series Analysis","Edge/Federated Learning","Retrieval-Augmented Generation (RAG)"] },
+    { name:"Open Elective-1", topics:["Cyber Security & Digital Safety OR Business Intelligence & Analytics"] },
+    { name:"Selected Value-Added Course", topics:["Practical Field Training / Modern Technology Stack (Audit)"] },
+    { name:"Soft Skills for Employability", topics:["Interview Strategies","Workplace Dynamics","Resume Drafting","Industry Preparation"] },
+    { name:"Minor Project", topics:["Independent Project applying CS Principles"] },
+    { name:"Logical and Quantitative Techniques-II", topics:["Advanced Reasoning","Algorithmic Logic Puzzles","Quantitative Aptitude Modules"] }
+  ]},
+  { sem:7, year:4, subjects:[
+    { name:"Discipline Elective-6", topics:["ML and Natural Language Processing","Ethical Hacking & Prevention","Large Scale Database Systems","DevOps","Industrial Automation & IoT","Explainable AI","Probabilistic Graphical Models","AI for IoT","Sentiment Analysis & Opinion Mining"] },
+    { name:"Open Elective-2", topics:["UI/UX Design OR Software Testing Methodologies"] },
+    { name:"Major Project Part-1", topics:["Formulation & Research Review","Architecture Mapping","Preliminary Prototyping"] },
+    { name:"Summer Training-III", topics:["6-week Advanced Industrial Internship"] }
+  ]},
+  { sem:8, year:4, subjects:[
+    { name:"Discipline Elective-7", topics:["AI for Healthcare & Smart Systems","Digital Forensics & Cyber Laws","Social Network Analysis","Kubernetes & Microservices","AI for Finance","Agentic AI"] },
+    { name:"Open Elective-3", topics:["Social Media Analytics OR Digital Twin Concepts & Applications"] },
+    { name:"Major Project Part-2", topics:["Final Implementation & Optimization","Full Testing & Structural Verification","Thesis Compilation & Formal Defence"] }
+  ]}
+];
+
+/* ============================================================
+   COLLEGE REGISTRY — active syllabus switching
+   ============================================================ */
+const COLLEGES = {
+  hitk: { key:"hitk", label:"HITK IT", short:"HITK IT", syllabus: SYLLABUS_HITK },
+  juit: { key:"juit", label:"JUIT CSE", short:"JUIT CSE", syllabus: SYLLABUS_JUIT }
+};
+
+let SYLLABUS = SYLLABUS_HITK;
+
+function setActiveCollege(key){
+  const college = COLLEGES[key] || COLLEGES.hitk;
+  SYLLABUS = college.syllabus;
+  window.SYLLABUS = SYLLABUS;
+  return college;
+}
+
 const REVISION_CYCLE = [
   "Skim through all lecture notes for this subject",
   "Rework 2 previous years' question papers",
@@ -273,4 +368,8 @@ const REVISION_CYCLE = [
 window.DEFAULT_DB = DEFAULT_DB;
 window.CURRICULUM = CURRICULUM;
 window.SYLLABUS = SYLLABUS;
+window.SYLLABUS_HITK = SYLLABUS_HITK;
+window.SYLLABUS_JUIT = SYLLABUS_JUIT;
+window.COLLEGES = COLLEGES;
+window.setActiveCollege = setActiveCollege;
 window.REVISION_CYCLE = REVISION_CYCLE;
