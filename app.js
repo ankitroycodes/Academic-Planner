@@ -16,7 +16,8 @@ const DEFAULT_DB = window.DEFAULT_DB || {
   prep: { done: {} },
   timeSync: { offsetMs: 0, lastSynced: null, verified: false },
   tracking: { dailyLogs: {}, historicalPerformance: [] },
-  github: { username: "", profile: null, repos: [], events: [], lastSyncedAt: null }
+  github: { username: "", profile: null, repos: [], events: [], lastSyncedAt: null },
+  leetcode: { username: "", profile: null, lastSyncedAt: null }
 };
 
 let DB = null;
@@ -88,6 +89,7 @@ function loadDB(){
       timeSync: Object.assign(clone(DEFAULT_DB.timeSync), parsed.timeSync),
       tracking: Object.assign(clone(DEFAULT_DB.tracking), parsed.tracking),
       github: Object.assign(clone(DEFAULT_DB.github), parsed.github),
+      leetcode: Object.assign(clone(DEFAULT_DB.leetcode), parsed.leetcode),
       resume: Object.assign(clone(DEFAULT_DB.resume), parsed.resume)
     });
   }catch(e){ console.warn("DB load failed, using defaults", e); return clone(DEFAULT_DB); }
@@ -518,6 +520,30 @@ async function syncGitHubProfile(username){
   renderSettings();
 }
 
+async function syncLeetCodeProfile(username){
+  const clean = (username || "").trim();
+  if(!clean) throw new Error("Enter a LeetCode username first.");
+  const response = await fetch(`https://leetcode-stats-api.herokuapp.com/${encodeURIComponent(clean)}`);
+  if(!response.ok) throw new Error("LeetCode is rate-limiting this browser. Try again later.");
+  const stats = await response.json();
+  if(stats.status !== "success") throw new Error("LeetCode user not found.");
+  DB.leetcode = {
+    username: clean,
+    profile: {
+      ranking: stats.ranking ?? null,
+      totalSolved: stats.totalSolved ?? 0,
+      totalQuestions: stats.totalQuestions ?? 0,
+      easySolved: stats.easySolved ?? 0,
+      mediumSolved: stats.mediumSolved ?? 0,
+      hardSolved: stats.hardSolved ?? 0,
+      acceptanceRate: stats.acceptanceRate ?? null
+    },
+    lastSyncedAt: new Date().toISOString()
+  };
+  saveDB("LeetCode profile sync");
+  renderSettings();
+}
+
 function buildAcademicGoalEntries(subjects, weekKey){
   const today = todayMidnight();
   const entries = [];
@@ -709,6 +735,25 @@ function renderHome(){
   document.getElementById("statMissed").textContent = missedCount;
   const curYear = (start && idx < total) ? WEEKS[Math.min(idx,total-1)].yearId : (idx>=total ? 4 : 1);
   document.getElementById("statYear").textContent = curYear;
+
+  const homeGithubStatus = document.getElementById("homeGithubStatus");
+  if(homeGithubStatus){
+    const gh = DB.github || {};
+    if(gh.profile){
+      homeGithubStatus.innerHTML = `<img src="${gh.profile.avatar}" alt=""><div class="dev-status-body"><a href="${gh.profile.url}" target="_blank" rel="noopener">@${gh.profile.login}</a><span class="dev-status-meta">GitHub · ${gh.profile.publicRepos} repos · ${gh.profile.followers} followers</span></div>`;
+    } else {
+      homeGithubStatus.innerHTML = `<div class="dev-status-icon">GH</div><div class="dev-status-body"><span class="dev-status-empty">GitHub not connected — add a username in Settings.</span></div>`;
+    }
+  }
+  const homeLeetcodeStatus = document.getElementById("homeLeetcodeStatus");
+  if(homeLeetcodeStatus){
+    const lt = DB.leetcode || {};
+    if(lt.profile){
+      homeLeetcodeStatus.innerHTML = `<div class="dev-status-icon">LC</div><div class="dev-status-body"><a href="https://leetcode.com/${lt.username}/" target="_blank" rel="noopener">@${lt.username}</a><span class="dev-status-meta">LeetCode · ${lt.profile.totalSolved} solved · Rank #${lt.profile.ranking ?? "—"}</span></div>`;
+    } else {
+      homeLeetcodeStatus.innerHTML = `<div class="dev-status-icon">LC</div><div class="dev-status-body"><span class="dev-status-empty">LeetCode not connected — add a username in Settings.</span></div>`;
+    }
+  }
 
   const track = document.getElementById("track");
   track.innerHTML = CURRICULUM.years.map(year=>{
@@ -1417,6 +1462,16 @@ function renderSettings(){
       ghSummary.innerHTML = `<div class="gh-profile"><img src="${gh.profile.avatar}" alt=""><div><a href="${gh.profile.url}" target="_blank" rel="noopener">@${gh.profile.login}</a><span>${gh.profile.publicRepos} public repos · ${gh.profile.followers} followers</span></div></div><div class="gh-repos">${repos || "No recent public repositories found."}</div><div class="sync-note">Synced ${new Date(gh.lastSyncedAt).toLocaleString()}</div>`;
     } else ghSummary.innerHTML = `<div class="empty-sub">Your public GitHub activity will appear here after a sync.</div>`;
   }
+  const ltInput = document.getElementById("ltUsername");
+  const ltSummary = document.getElementById("ltSummary");
+  if(ltInput) ltInput.value = DB.leetcode?.username || "";
+  if(ltSummary){
+    const lt = DB.leetcode || {};
+    if(lt.profile){
+      const p = lt.profile;
+      ltSummary.innerHTML = `<div class="gh-profile"><div><a href="https://leetcode.com/${lt.username}/" target="_blank" rel="noopener">@${lt.username}</a><span>${p.totalSolved}/${p.totalQuestions} solved · Rank #${p.ranking ?? "—"}</span></div></div><div class="gh-repos"><span>${p.easySolved} easy</span><span>${p.mediumSolved} medium</span><span>${p.hardSolved} hard</span></div><div class="sync-note">Synced ${new Date(lt.lastSyncedAt).toLocaleString()}</div>`;
+    } else ltSummary.innerHTML = `<div class="empty-sub">Your public LeetCode stats will appear here after a sync.</div>`;
+  }
   const historyList = document.getElementById("historyList");
   if(historyList){
     const history = getHistory().slice(0, 8);
@@ -1453,6 +1508,105 @@ function applyTheme(){
 }
 
 /* ---------------- init & events ---------------- */
+/* ---------------- CUSTOM SELECT (in-app dropdowns, not browser-native) ---------------- */
+function enhanceSelect(select){
+  if(!select || select.dataset.enhanced) return;
+  select.dataset.enhanced = "1";
+
+  const wrap = document.createElement("div");
+  wrap.className = "custom-select-wrap";
+  if(select.getAttribute("style")){
+    wrap.setAttribute("style", select.getAttribute("style"));
+    select.removeAttribute("style");
+  }
+  select.parentNode.insertBefore(wrap, select);
+  wrap.appendChild(select);
+
+  const trigger = document.createElement("button");
+  trigger.type = "button";
+  trigger.className = "custom-select-trigger";
+  const triggerLabel = document.createElement("span");
+  triggerLabel.className = "custom-select-label";
+  const chevron = document.createElement("span");
+  chevron.className = "custom-select-chevron";
+  chevron.textContent = "▾";
+  trigger.appendChild(triggerLabel);
+  trigger.appendChild(chevron);
+  wrap.appendChild(trigger);
+
+  const panel = document.createElement("div");
+  panel.className = "custom-select-panel";
+  wrap.appendChild(panel);
+
+  function currentLabel(){
+    const opt = select.options[select.selectedIndex];
+    return opt ? opt.textContent : "";
+  }
+
+  function closePanel(){ wrap.classList.remove("open"); }
+  function openPanel(){
+    document.querySelectorAll(".custom-select-wrap.open").forEach(w=>{ if(w!==wrap) w.classList.remove("open"); });
+    wrap.classList.add("open");
+    const sel = panel.querySelector(".custom-select-option.selected");
+    if(sel) sel.scrollIntoView({block:"nearest"});
+  }
+  function togglePanel(){ wrap.classList.contains("open") ? closePanel() : openPanel(); }
+
+  function buildPanel(){
+    panel.innerHTML = "";
+    Array.from(select.options).forEach(opt=>{
+      const item = document.createElement("div");
+      item.className = "custom-select-option" + (opt.disabled ? " disabled" : "") + (opt.value===select.value ? " selected" : "");
+      item.textContent = opt.textContent;
+      item.dataset.value = opt.value;
+      if(!opt.disabled){
+        item.addEventListener("click", ()=>{
+          select.value = opt.value;
+          select.dispatchEvent(new Event("change", {bubbles:true}));
+          closePanel();
+        });
+      }
+      panel.appendChild(item);
+    });
+  }
+
+  function syncLabel(){
+    triggerLabel.textContent = currentLabel();
+    trigger.classList.toggle("is-disabled", select.disabled);
+    panel.querySelectorAll(".custom-select-option").forEach(el=>{
+      el.classList.toggle("selected", el.dataset.value === select.value);
+    });
+  }
+
+  trigger.addEventListener("click", (e)=>{
+    e.stopPropagation();
+    if(select.disabled) return;
+    togglePanel();
+  });
+  document.addEventListener("click", (e)=>{ if(!wrap.contains(e.target)) closePanel(); });
+  document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") closePanel(); });
+
+  // Underlying <option> list gets rebuilt dynamically elsewhere (e.g. via .innerHTML) — watch for that.
+  new MutationObserver(()=>{ buildPanel(); syncLabel(); }).observe(select, {childList:true});
+
+  // App code sometimes sets `select.value = x` directly; intercept so the custom UI stays in sync.
+  const valueDescriptor = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value");
+  Object.defineProperty(select, "value", {
+    configurable:true,
+    get(){ return valueDescriptor.get.call(this); },
+    set(v){ valueDescriptor.set.call(this, v); syncLabel(); }
+  });
+
+  select.addEventListener("change", syncLabel);
+
+  buildPanel();
+  syncLabel();
+}
+
+function enhanceAllSelects(root=document){
+  root.querySelectorAll("select").forEach(enhanceSelect);
+}
+
 function init(){
   DB = loadDB();
   setActiveCollege(DB.settings.college || "hitk");
@@ -1540,6 +1694,13 @@ function init(){
     try { await syncGitHubProfile(document.getElementById("ghUsername").value); }
     catch(err) { showNotice(err.message || "GitHub sync failed.", "error"); }
     finally { button.disabled = false; button.textContent = "Sync GitHub"; }
+  });
+  document.getElementById("ltSync").addEventListener("click", async ()=>{
+    const button = document.getElementById("ltSync");
+    button.disabled = true; button.textContent = "Syncing…";
+    try { await syncLeetCodeProfile(document.getElementById("ltUsername").value); }
+    catch(err) { showNotice(err.message || "LeetCode sync failed.", "error"); }
+    finally { button.disabled = false; button.textContent = "Sync LeetCode"; }
   });
 
   document.getElementById("acAdd").addEventListener("click", ()=>{
@@ -1713,6 +1874,8 @@ function init(){
     projectsFilter = "all";
     renderProjects();
   });
+
+  enhanceAllSelects();
 }
 
 document.addEventListener("DOMContentLoaded", init);

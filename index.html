@@ -182,7 +182,7 @@ window.addEventListener('error', function(e){
           <div class="card current-week-card">
             <div class="card-eyebrow">Current focus</div>
             <h2 id="cwTitle">—</h2>
-            <div class="cw-due" id="cwDue">—</div>
+            <div class="cw-due card-divider" id="cwDue">—</div>
             <ul class="task-list" id="cwTasks"></ul>
             <div class="home-academic-block">
               <div class="card-eyebrow">Academic goals</div>
@@ -192,8 +192,8 @@ window.addEventListener('error', function(e){
         </div>
 
         <div class="home-right-stack">
-          <div class="card">
-            <div class="card-eyebrow">Trajectory status</div>
+          <div class="card accent-card">
+            <div class="card-eyebrow card-divider">Trajectory status</div>
             <div class="ring-wrap">
               <svg viewBox="0 0 120 120" class="ring">
                 <circle cx="60" cy="60" r="52" class="ring-track"/>
@@ -211,11 +211,19 @@ window.addEventListener('error', function(e){
             </div>
           </div>
 
-          <div class="card">
-            <div class="card-eyebrow">The track</div>
-            <div class="track" id="track"></div>
+          <div class="card accent-card">
+            <div class="card-eyebrow card-divider">Dev accounts</div>
+            <div class="dev-status-stack">
+              <div class="dev-status-item" id="homeGithubStatus"></div>
+              <div class="dev-status-item" id="homeLeetcodeStatus"></div>
+            </div>
           </div>
         </div>
+      </div>
+
+      <div class="card accent-card track-full-card">
+        <div class="card-eyebrow card-divider">The track</div>
+        <div class="track" id="track"></div>
       </div>
 
       <div class="card full-width-card">
@@ -472,6 +480,16 @@ window.addEventListener('error', function(e){
           <button class="btn btn-primary" id="ghSync">Sync GitHub</button>
         </div>
         <div class="github-summary" id="ghSummary"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-eyebrow">LeetCode pulse</div>
+        <p class="pc-desc">Connect a public LeetCode username to bring your solved counts and ranking into your dashboard. No token is stored.</p>
+        <div class="form-row" style="margin-top:14px">
+          <input class="field-input" id="ltUsername" placeholder="LeetCode username">
+          <button class="btn btn-primary" id="ltSync">Sync LeetCode</button>
+        </div>
+        <div class="github-summary" id="ltSummary"></div>
       </div>
 
       <div class="card">

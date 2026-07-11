@@ -13,6 +13,7 @@ window.DEFAULT_DB = {
   timeSync: { offsetMs: 0, lastSynced: null, verified: false },
   tracking: { dailyLogs: {}, historicalPerformance: [] },
   github: { username: "", profile: null, repos: [], events: [], lastSyncedAt: null },
+  leetcode: { username: "", profile: null, lastSyncedAt: null },
   resume: { email: "", phone: "", location: "", linkedin: "", portfolio: "", targetRole: "", summary: "" }
 };
 
