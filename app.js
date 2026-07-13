@@ -285,17 +285,73 @@ function switchTrackingView(targetScope){
   else renderTrackingDashboard();
 }
 
-function getMonthPerformanceRatio(monthIndex){
+function getMonthPerformanceRatio(monthIndex) {
+  // 1. Check if a frozen historical score already exists
   const history = Array.isArray(DB.tracking?.historicalPerformance) ? DB.tracking.historicalPerformance : [];
   const entry = history.find(item => String(item.monthIndex) === String(monthIndex));
-  if(entry){
-    const value = typeof entry === "number" ? entry : (entry.value ?? entry.ratio ?? entry.score ?? 0);
-    return Math.max(0, Math.min(1, Number(value) || 0));
+  if (entry && entry.value !== undefined) {
+    return Math.max(0, Math.min(1, Number(entry.value)));
   }
-  const base = monthIndex * 4;
-  const statuses = [0,1,2,3].map(w=>DB.schedule.weekStatus[base + w]);
-  const done = statuses.filter(s=>s==="done").length;
-  return done / 4;
+
+  // --- ADVANCED TRAJECTORY ALGORITHM ---
+  // Internal difficulty grading weights
+  const WEIGHTS = { project: 3.0, skill: 2.0, academic: 1.5, base: 1.0 };
+  
+  let earned = 0;
+  let possible = 0;
+  const baseWeek = monthIndex * 4;
+
+  for (let w = 0; w < 4; w++) {
+    const weekIdx = baseWeek + w;
+    const weekData = WEEKS[weekIdx];
+    if (!weekData) continue;
+
+    // Phase A: Grade Weekly Plan Tasks
+    const doneTasks = DB.schedule.weekTaskDone[String(weekIdx)] || [];
+    weekData.tasks.forEach(task => {
+      // Dynamically infer difficulty based on task vocabulary
+      let weight = WEIGHTS.base;
+      if (/project|milestone|ship|deploy|build/i.test(task.text)) weight = WEIGHTS.project;
+      else if (/dsa|solve|code|algorithm/i.test(task.text)) weight = WEIGHTS.skill;
+      else if (/review|summary|concept|study/i.test(task.text)) weight = WEIGHTS.academic;
+
+      possible += weight;
+      if (doneTasks.includes(task.id)) earned += weight;
+    });
+
+    // Phase B: Grade Daily Logs (Day-wise Micro-Pulse)
+    const weekDate = weekDueDate(weekIdx);
+    if (weekDate) {
+      for (let d = 0; d < 7; d++) {
+        const dayKey = getWeekKey(addDays(weekDate, d));
+        const dayLogs = DB.tracking?.dailyLogs?.[dayKey] || {};
+        
+        Object.entries(dayLogs).forEach(([taskId, isDone]) => {
+          let weight = WEIGHTS.base;
+          // Exploit structured prefixes from daily tracking
+          if (taskId.startsWith("project:")) weight = WEIGHTS.project;
+          else if (taskId.startsWith("skill:")) weight = WEIGHTS.skill;
+          else if (taskId.startsWith("academic:")) weight = WEIGHTS.academic;
+          
+          // Daily tasks act as fractional micro-increments to create day-to-day graph movement
+          const dailyPulseWeight = weight * 0.15;
+          possible += dailyPulseWeight;
+          if (isDone) earned += dailyPulseWeight;
+        });
+      }
+    }
+    
+    // Phase C: Fallback to high-level week status if no granular tasks are scheduled
+    if (possible === 0) {
+      const status = DB.schedule.weekStatus[weekIdx];
+      possible += 1;
+      if (status === "done") earned += 1;
+      else if (status === "partial") earned += 0.5;
+    }
+  }
+
+  // Calculate the final rolling percentage
+  return possible === 0 ? 0 : Math.max(0, Math.min(1, earned / possible));
 }
 
 function renderMonthHeatmap(){
@@ -523,10 +579,19 @@ async function syncGitHubProfile(username){
 async function syncLeetCodeProfile(username){
   const clean = (username || "").trim();
   if(!clean) throw new Error("Enter a LeetCode username first.");
-  const response = await fetch(`https://leetcode-stats-api.herokuapp.com/${encodeURIComponent(clean)}`);
-  if(!response.ok) throw new Error("LeetCode is rate-limiting this browser. Try again later.");
+  
+  // Use a modern, active proxy endpoint that bypasses Cloudflare blocks
+  const response = await fetch(`https://alfa-leetcode-api.onrender.com/${encodeURIComponent(clean)}`);
+  
+  if(!response.ok) throw new Error("LeetCode API is rate-limiting or unavailable. Try again later.");
+  
   const stats = await response.json();
-  if(stats.status !== "success") throw new Error("LeetCode user not found.");
+  
+  // The API returns an 'errors' array if the user doesn't exist
+  if(stats.errors || stats.message === "User not found") {
+    throw new Error("LeetCode user not found.");
+  }
+  
   DB.leetcode = {
     username: clean,
     profile: {
@@ -540,15 +605,45 @@ async function syncLeetCodeProfile(username){
     },
     lastSyncedAt: new Date().toISOString()
   };
+  
   saveDB("LeetCode profile sync");
   renderSettings();
+}
+
+// Weekly academic targets should surface theory only — labs, workshops, projects,
+// internships, viva/presentation logistics and pure-practice blocks are excluded here.
+// This does NOT touch the full syllabus reference view on the Academics page, only
+// the weekly target generation below. Curated per-college from the actual syllabus
+// content (subject name alone isn't reliable — e.g. JUIT names many theory-heavy
+// subjects "X & Lab" while still listing genuinely conceptual topics).
+const PRACTICAL_SUBJECT_EXCLUDE = new Set([
+  // HITK
+  "physics & electronics labs", "design thinking lab", "industry competence lab",
+  "internship & major project phase-i", "major project-ii", "comprehensive viva",
+  "skill development", "final presentation",
+  // JUIT
+  "workshop", "life skills & professional communication lab", "engineering drawing & design",
+  "unix programming lab", "competitive programming-i", "competitive programming-ii",
+  "competitive programming-iii", "summer training-i", "summer training-ii", "summer training-iii",
+  "full stack development lab", "logical and quantitative techniques-i",
+  "logical and quantitative techniques-ii", "selected value-added course",
+  "soft skills for employability", "minor project", "major project part-1", "major project part-2"
+]);
+const PRACTICAL_TOPIC_EXCLUDE = new Set([
+  "laboratory instrumentation", "experimental verification", "experimental setups"
+]);
+function isTheoryOnlySubject(subjectName){
+  return !PRACTICAL_SUBJECT_EXCLUDE.has(String(subjectName || "").trim().toLowerCase());
+}
+function isTheoryOnlyTopic(topic){
+  return !PRACTICAL_TOPIC_EXCLUDE.has(String(topic || "").trim().toLowerCase());
 }
 
 function buildAcademicGoalEntries(subjects, weekKey){
   const today = todayMidnight();
   const entries = [];
-  (subjects || []).forEach(subject=>{
-    const topicList = Array.isArray(subject.topics) ? subject.topics : [];
+  (subjects || []).filter(subject=>isTheoryOnlySubject(subject.name)).forEach(subject=>{
+    const topicList = (Array.isArray(subject.topics) ? subject.topics : []).filter(isTheoryOnlyTopic);
     const examDate = parseDate(subject.examDate);
     const daysToExam = examDate ? diffDays(examDate, today) : null;
     // Reserve the last 12 weeks for revision. The remaining syllabus is distributed
@@ -655,23 +750,58 @@ function renderHome(){
     const daysTo = diffDays(start, today);
     dayCounter.textContent = `T-MINUS ${daysTo}D`;
     prepBanner.hidden = false;
+    const prepSections = [
+      ["skill", CURRICULUM.prep.skill],
+      ["academic", CURRICULUM.prep.academic],
+      ["project", CURRICULUM.prep.project]
+    ];
+    const totalTasks = prepSections.reduce((sum, [,sec])=>sum + sec.tasks.length, 0);
     const doneCount = Object.keys(DB.prep.done).filter(k=>DB.prep.done[k]).length;
+    const pct = totalTasks ? Math.round((doneCount/totalTasks)*100) : 0;
+    const ringCirc = 251.2;
+    const ringOffset = ringCirc - (ringCirc * pct / 100);
+    const allDone = doneCount === totalTasks && totalTasks > 0;
+
     prepBanner.innerHTML = `
-      <div class="sem-badge-row">
-        <div class="sem-badge">${daysTo}D</div>
-        <div>
-          <div style="font-weight:700;font-size:16px">Your course starts ${fmtLong(start)}</div>
-          <div class="sem-meta">${daysTo} day${daysTo===1?"":"s"} to get ahead · ${doneCount}/${CURRICULUM.prep.tasks.length} done</div>
+      <div class="prep-head-row">
+        <div class="prep-ring-wrap">
+          <svg class="prep-ring" viewBox="0 0 90 90">
+            <circle class="prep-ring-track" cx="45" cy="45" r="40"></circle>
+            <circle class="prep-ring-fill" cx="45" cy="45" r="40" style="stroke-dashoffset:${ringOffset}"></circle>
+          </svg>
+          <div class="prep-ring-center">
+            <div class="prep-ring-pct">${pct}%</div>
+            <div class="prep-ring-label">READY</div>
+          </div>
         </div>
+        <div class="prep-head-copy">
+          <div style="font-weight:700;font-size:16px">Your course starts ${fmtLong(start)}</div>
+          <div class="sem-meta">${daysTo} day${daysTo===1?"":"s"} to get ahead · ${doneCount}/${totalTasks} done</div>
+        </div>
+        <div class="prep-ready-badge ${allDone?"":"locked"}">${allDone?"✓ MISSION READY":"IN PROGRESS"}</div>
       </div>
-      <div class="card-eyebrow" style="margin-top:16px">${CURRICULUM.prep.title.toUpperCase()}</div>
-      <ul class="task-list prep-pills">
-        ${CURRICULUM.prep.tasks.map((t,i)=>`
-          <li class="${DB.prep.done[i]?'done':''}">
-            <input type="checkbox" data-prep="${i}" ${DB.prep.done[i]?'checked':''}>
-            <label>${t}</label>
-          </li>`).join("")}
-      </ul>`;
+      <div class="prep-grid">
+        ${prepSections.map(([key, sec])=>{
+          const sectionDone = sec.tasks.filter((_,i)=>DB.prep.done[key+":"+i]).length;
+          return `
+          <div class="prep-track-card">
+            <div class="prep-track-head">
+              <div class="prep-track-title">${sec.title}</div>
+              <div class="prep-track-count">${sectionDone}/${sec.tasks.length}</div>
+            </div>
+            <ul class="prep-track-list">
+              ${sec.tasks.map((t,i)=>{
+                const isDone = !!DB.prep.done[key+":"+i];
+                return `
+                <li class="${isDone?"done":""}">
+                  <input type="checkbox" data-prep="${key}:${i}" ${isDone?"checked":""}>
+                  <label>${t}</label>
+                </li>`;
+              }).join("")}
+            </ul>
+          </div>`;
+        }).join("")}
+      </div>`;
     prepBanner.querySelectorAll("[data-prep]").forEach(cb=>{
       cb.addEventListener("change", ()=>{ DB.prep.done[cb.dataset.prep]=cb.checked; saveDB(); renderHome(); });
     });
@@ -690,9 +820,22 @@ function renderHome(){
   const idx = DB.schedule.currentIndex;
 
   if(!start || start > today){
-    cwTitle.textContent = "Ready when you are";
-    cwDue.textContent = start ? `Weekly targets unlock on ${fmtShort(start)}` : "Set your start date in Settings";
-    cwTasks.innerHTML = "";
+    const previewWeek = WEEKS[0] || null;
+    if(previewWeek){
+      cwTitle.textContent = `${previewWeek.yearLabel} · ${previewWeek.monthName} · Week ${previewWeek.weekInMonth}`;
+      cwDue.textContent = start ? `Unlocks ${fmtShort(start)} — preview` : "Set your start date in Settings to unlock this";
+      cwTasks.innerHTML = `<div class="week-locked-banner">🔒 Locked until your course starts — here's what Week 1 looks like</div>` +
+        previewWeek.tasks.map(t=>`
+        <li class="locked">
+          <input type="checkbox" disabled>
+          <label>${t.text}</label>
+          <span class="prep-lock-icon">LOCKED</span>
+        </li>`).join("");
+    } else {
+      cwTitle.textContent = "Ready when you are";
+      cwDue.textContent = start ? `Weekly targets unlock on ${fmtShort(start)}` : "Set your start date in Settings";
+      cwTasks.innerHTML = "";
+    }
   } else if(idx >= WEEKS.length){
     cwTitle.textContent = "🎉 Trajectory complete";
     cwDue.textContent = "You've cleared all four years. Time to look back at Progress.";
