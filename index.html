@@ -36,26 +36,66 @@ window.addEventListener('error', function(e){
 
 <!-- ============ ONBOARDING ============ -->
 <div class="onboard-overlay" id="onboardOverlay">
-  <div class="onboard-card">
-    <div class="onboard-eyebrow">TRAJECTORY // SETUP</div>
-    <h1>Plot your course.</h1>
-    <p class="onboard-sub">One profile, four years, a schedule that adapts when life gets in the way.</p>
+  <div class="onboard-card onboard-card-wizard">
 
-    <label class="field-label" for="obName">Your name</label>
-    <input class="field-input" id="obName" type="text" placeholder="e.g. Ankit Roy" autocomplete="off">
+    <div class="onboard-steps" id="onboardSteps">
+      <div class="onboard-step-dot active" data-step="1"><span>1</span><label>Profile</label></div>
+      <div class="onboard-step-line"></div>
+      <div class="onboard-step-dot" data-step="2"><span>2</span><label>Field</label></div>
+      <div class="onboard-step-line"></div>
+      <div class="onboard-step-dot" data-step="3"><span>3</span><label>Ready</label></div>
+    </div>
 
-    <label class="field-label" for="obDate">Course start date</label>
-    <input class="field-input" id="obDate" type="date">
+    <!-- ---- Step 1: Profile ---- -->
+    <div class="onboard-panel" id="obPanel1">
+      <div class="onboard-eyebrow">TRAJECTORY // SETUP</div>
+      <h1>Plot your course.</h1>
+      <p class="onboard-sub">One profile, four years, a schedule that adapts when life gets in the way.</p>
 
-    <label class="field-label" for="obCollege">Your college</label>
-    <select class="field-input" id="obCollege">
-      <option value="hitk">HITK IT</option>
-      <option value="juit">JUIT CSE</option>
-    </select>
-    <p class="pc-desc theme-help">Sets your semester syllabus and subject list. Change it later anytime in Settings.</p>
+      <label class="field-label" for="obName">Your name</label>
+      <input class="field-input" id="obName" type="text" placeholder="e.g. Ankit Roy" autocomplete="off">
 
-    <button class="btn btn-primary btn-block" id="obSubmit">Begin trajectory</button>
-    <div class="onboard-note">Everything is stored locally in this browser — nothing leaves your device.</div>
+      <label class="field-label" for="obDate">Course start date</label>
+      <input class="field-input" id="obDate" type="date">
+
+      <label class="field-label" for="obCollege">Your college</label>
+      <!-- Options below are a static pre-render fallback only; populateCollegeSelects()
+           in app.js overwrites them from the COLLEGES registry in data.js at boot.
+           Adding a college does NOT require editing this markup. -->
+      <select class="field-input" id="obCollege">
+        <option value="hitk">HITK IT</option>
+        <option value="juit">JUIT CSE</option>
+      </select>
+      <p class="pc-desc theme-help">Sets your semester syllabus and subject list. Change it later anytime in Settings.</p>
+
+      <button class="btn btn-primary btn-block" id="obNext1">Continue</button>
+      <div class="onboard-note">Everything is stored locally in this browser — nothing leaves your device.</div>
+    </div>
+
+    <!-- ---- Step 2: Field quiz ---- -->
+    <div class="onboard-panel" id="obPanel2" hidden>
+      <div class="onboard-eyebrow">TRAJECTORY // FIND YOUR FIELD</div>
+      <h1 class="onboard-h1-sm">Ten quick questions.</h1>
+      <p class="onboard-sub">This shapes which electives and project variants get highlighted for you — you can retake it anytime from Settings.</p>
+
+      <div class="quiz-progress"><div class="quiz-progress-fill" id="quizProgressFill"></div></div>
+      <div id="quizHost"></div>
+
+      <button class="btn btn-ghost btn-block" id="obSkipQuiz">I'm not sure — just start me on the generalist track</button>
+      <div class="onboard-wizard-actions">
+        <button class="btn btn-ghost" id="obBack2">Back</button>
+      </div>
+    </div>
+
+    <!-- ---- Step 3: Result ---- -->
+    <div class="onboard-panel" id="obPanel3" hidden>
+      <div class="onboard-eyebrow">TRAJECTORY // YOUR TRACK</div>
+      <h1 class="onboard-h1-sm">Here's where you land.</h1>
+      <div class="track-result-card" id="trackResultCard"></div>
+      <button class="btn btn-ghost btn-block" id="obRetakeQuiz">Retake the quiz</button>
+      <button class="btn btn-primary btn-block" id="obSubmit">Begin trajectory</button>
+    </div>
+
   </div>
 </div>
 
@@ -114,6 +154,7 @@ window.addEventListener('error', function(e){
         <div>
           <div class="eyebrow" id="homeGreeting">WELCOME BACK</div>
           <h1 id="homeTitle">Home</h1>
+          <div class="track-badge" id="homeTrackBadge" hidden></div>
         </div>
         <div class="stat-chip" id="dayCounter">DAY 000</div>
       </header>
@@ -453,6 +494,12 @@ window.addEventListener('error', function(e){
       </div>
 
       <div class="card">
+        <div class="card-eyebrow">Field &amp; specialization</div>
+        <div id="stTrackSummary"></div>
+        <button class="btn btn-ghost" id="stRetakeQuiz" style="margin-top:14px">Retake the field quiz</button>
+      </div>
+
+      <div class="card">
         <div class="card-eyebrow">Appearance</div>
         <div class="theme-picker" id="themePicker">
           <button type="button" class="theme-swatch" data-theme="lavender"><span></span>Nocturne Lavender</button>
@@ -469,17 +516,24 @@ window.addEventListener('error', function(e){
           <option value="hitk">HITK IT</option>
           <option value="juit">JUIT CSE</option>
         </select>
+        <div class="institution-detail" id="institutionDetail"></div>
         <p class="pc-desc theme-help">Switches the semester syllabus and subjects app-wide. Your roadmap and projects stay the same.</p>
       </div>
 
       <div class="card">
         <div class="card-eyebrow">GitHub pulse</div>
-        <p class="pc-desc">Connect a public GitHub username to bring repositories and public activity into your dashboard. No token is stored.</p>
+        <p class="pc-desc">Connect a public GitHub username to bring repositories and public activity into your dashboard. No token is stored. This account also becomes your verified development identity — repos you submit must belong to it.</p>
         <div class="form-row" style="margin-top:14px">
           <input class="field-input" id="ghUsername" placeholder="GitHub username">
           <button class="btn btn-primary" id="ghSync">Sync GitHub</button>
         </div>
         <div class="github-summary" id="ghSummary"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-eyebrow">Submission history</div>
+        <p class="pc-desc">Every verification attempt — passed or failed — is logged here with what happened and when.</p>
+        <div class="submission-history" id="submissionHistory"></div>
       </div>
 
       <div class="card">
@@ -490,6 +544,26 @@ window.addEventListener('error', function(e){
           <button class="btn btn-primary" id="ltSync">Sync LeetCode</button>
         </div>
         <div class="github-summary" id="ltSummary"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-eyebrow">Codeforces pulse</div>
+        <p class="pc-desc">Connect a public Codeforces handle to bring your rating and rank into your dashboard. No token is stored. Codeforces' API doesn't support requests directly from browsers, so sync can occasionally fail even for a valid handle — that's a limitation on their end, not a broken profile.</p>
+        <div class="form-row" style="margin-top:14px">
+          <input class="field-input" id="cfUsername" placeholder="Codeforces handle">
+          <button class="btn btn-primary" id="cfSync">Sync Codeforces</button>
+        </div>
+        <div class="github-summary" id="cfSummary"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-eyebrow">CodeChef pulse</div>
+        <p class="pc-desc">Connect a public CodeChef username to bring your rating and rank into your dashboard. No token is stored. CodeChef has no official public API, so this relies on a third-party service that can occasionally be unavailable.</p>
+        <div class="form-row" style="margin-top:14px">
+          <input class="field-input" id="ccUsername" placeholder="CodeChef username">
+          <button class="btn btn-primary" id="ccSync">Sync CodeChef</button>
+        </div>
+        <div class="github-summary" id="ccSummary"></div>
       </div>
 
       <div class="card">

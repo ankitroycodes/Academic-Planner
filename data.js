@@ -1,18 +1,16 @@
-/* ============================================================
-   TRAJECTORY — Curriculum & Syllabus Data
-   ============================================================ */
+
 
 window.DEFAULT_DB = {
-  profile: { name: "", startDate: "", createdAt: "" },
+  profile: { name: "", startDate: "", createdAt: "", track: null },
   settings: { theme: "lavender", college: "hitk" },
   schedule: { currentIndex: 0, offsetDays: 0, weekStatus: {}, weekTaskDone: {} },
   academics: { subjects: [] },
-  projects: { shipped: {}, started: {}, meta: {}, custom: [] },
+  projects: { shipped: {}, started: {}, meta: {}, custom: [], submissions: [] },
   progress: { dsaSolved: 0 },
   prep: { done: {} },
   timeSync: { offsetMs: 0, lastSynced: null, verified: false },
   tracking: { dailyLogs: {}, historicalPerformance: [] },
-  github: { username: "", profile: null, repos: [], events: [], lastSyncedAt: null },
+  github: { username: "", profile: null, repos: [], events: [], lastSyncedAt: null, verifiedIdentity: false },
   leetcode: { username: "", profile: null, lastSyncedAt: null },
   resume: { email: "", phone: "", location: "", linkedin: "", portfolio: "", targetRole: "", summary: "" }
 };
@@ -20,126 +18,126 @@ window.DEFAULT_DB = {
 const CURRICULUM = {
   years: [
     {
-      id: 1, label: "Year 1", window: "2026–27", theme: "Foundation",
-      goal: "Build an unshakable foundation",
+      id: 1, label: "Year 1", window: "2026–27", theme: "Programming Foundations",
+      goal: "Learn to code, think logically, and build simple but polished software.",
       months: [
-        { name:"Month 1", focus:["Python basics — variables, loops, functions, lists, dicts, file I/O","Tooling — VS Code, Git, GitHub, Linux (WSL/Ubuntu)","CS theory — binary, decimal, hex, memory & CPU basics","AI literacy — what is AI, ML vs DL, how LLMs work"],
-          dsa:20, project:"Scientific Calculator (CLI)", desc:"CLI calculator covering arithmetic, memory and basic scientific functions.", stack:["PYTHON"] },
-        { name:"Month 2", focus:["Python OOP, exceptions, virtual environments","Web — HTML5 & CSS3","Git — branches, merge, pull requests","Linux — file system, bash basics, permissions"],
-          dsa:20, project:"Personal Portfolio Website", desc:"Responsive personal site deployed on GitHub Pages.", stack:["HTML","CSS"] },
-        { name:"Month 3", focus:["C++ basics — pointers (intro), STL (vector, pair)","Responsive CSS — Flexbox, Grid","OS concepts — processes & threads","AI — neural networks & transformers (concept)"],
-          dsa:20, project:"Expense Tracker", desc:"Track daily expenses with local file-based storage.", stack:["PYTHON","FILE I/O"] },
-        { name:"Month 4", focus:["JavaScript — variables, DOM, events, fetch API","SQL — SELECT / INSERT / UPDATE / DELETE","Linux shell scripting"],
-          dsa:15, project:"Weather App (API-driven)", desc:"Live weather lookup by city using a public weather API.", stack:["JAVASCRIPT","API"] },
-        { name:"Month 5", focus:["Revision month — consolidate the whole semester","Update GitHub profile, publish first technical blog"],
-          dsa:10, project:"Student Result Manager", desc:"Store and query student results with SQL persistence.", stack:["SQL","CRUD"] },
-        { name:"Month 6 (Winter Break)", focus:["React, npm, REST APIs, JSON, HTTP fundamentals"],
-          dsa:10, project:"Notes App", desc:"First React app — create, edit and delete notes.", stack:["REACT"] },
-        { name:"Month 7", focus:["Python — advanced OOP & packages","React — components, props, state"],
-          dsa:15, project:"To-Do App", desc:"Task manager built with React components, props and state.", stack:["REACT"] },
-        { name:"Month 8", focus:["Backend — FastAPI or Node.js","SQL — joins, indexes, normalization","AI — prompt engineering & model limitations"],
-          dsa:10, project:"Notes API", desc:"REST backend for notes with joins, indexing and normalization.", stack:["FASTAPI","SQL"] },
-        { name:"Month 9", focus:["Auth — JWT, cookies, sessions","Deployment — Render, Vercel, GitHub Actions"],
-          dsa:10, project:"Authentication System", desc:"JWT-based signup/login flow with sessions and deployment.", stack:["JWT","AUTH"] },
-        { name:"Month 10", focus:["Networking — DNS, HTTP, HTTPS","AI — embeddings & vector databases (concept)"],
-          dsa:10, project:"Chat Application", desc:"Basic real-time chat using HTTP polling or sockets.", stack:["JAVASCRIPT","NETWORKING"] },
-        { name:"Month 11", focus:["Docker basics — containers, images, volumes"],
-          dsa:5, project:"Dockerize earlier projects", desc:"Containerize previous builds with Docker images & volumes.", stack:["DOCKER"] },
-        { name:"Month 12 (Summer Break)", focus:["Full review — Python, Git, React, SQL, Linux","DSA intensive — arrays through trees, push to 150–200 total"],
-          dsa:30, project:"Personal Dashboard", desc:"Capstone dashboard tying together the year's stack.", stack:["FULL STACK"] }
+        { name:"Month 1", focus:["C++ / Python", "Functions", "Loops", "File I/O"],
+          dsa:20, project:"Developer Toolbox CLI", desc:"Build a calculator, unit converter, password generator, and file organizer.", stack:["C++", "PYTHON"] },
+        { name:"Month 2", focus:["HTML", "CSS", "GitHub Pages"],
+          dsa:20, project:"Portfolio Website", desc:"Develop a responsive website featuring About, Projects, and Resume sections.", stack:["HTML", "CSS"] },
+        { name:"Month 3", focus:["OOP", "File Handling"],
+          dsa:20, project:"Expense Tracker", desc:"Create an object-oriented expense tracker with add/edit/delete features, categories, and a monthly summary.", stack:["PYTHON / C++"] },
+        { name:"Month 4", focus:["JavaScript", "APIs", "Async Programming"],
+          dsa:15, project:"Weather & News Dashboard", desc:"Fetch real-time data from external sources and display it dynamically using the Fetch API.", stack:["JAVASCRIPT", "API"] },
+        { name:"Month 5", focus:["SQL", "Database Basics", "CRUD"],
+          dsa:10, project:"Student Grade Manager", desc:"Build a database-backed manager for student records, tracking basic CRUD operations.", stack:["SQL"] },
+        { name:"Month 6 (Winter Break)", focus:["React", "Components", "State"],
+          dsa:10, project:"Notes App", desc:"Create a fast, component-driven application to store and manage text notes.", stack:["REACT"] },
+        { name:"Month 7", focus:["React", "Local Storage", "Charts"],
+          dsa:15, project:"Habit Tracker", desc:"Build a habit logging tool with visual progress charts and browser local storage persistence.", stack:["REACT", "LOCAL STORAGE"] },
+        { name:"Month 8", focus:["Node.js / Express", "REST APIs"],
+          dsa:10, project:"Student Resource API", desc:"Construct a backend server to deliver academic resources via standard RESTful endpoints.", stack:["NODE.JS", "EXPRESS"] },
+        { name:"Month 9", focus:["JWT", "Sessions", "Security Basics"],
+          dsa:10, project:"Authentication System", desc:"Secure user routes using token-based authentication and basic security hashing.", stack:["JWT", "AUTH"] },
+        { name:"Month 10", focus:["WebSockets", "Socket.io"],
+          dsa:10, project:"Realtime Chat App", desc:"Engineer a live, synchronized messaging room for users using two-way socket connections.", stack:["WEBSOCKETS", "SOCKET.IO"] },
+        { name:"Month 11", focus:["Docker", "Deployment Basics"],
+          dsa:5, project:"Dockerize Previous Projects", desc:"Wrap existing applications into standard containers for easy distribution and setup.", stack:["DOCKER"] },
+        { name:"Month 12 (Summer Break)", focus:["Full Stack", "Consolidation"],
+          dsa:30, project:"Academic Planner v1", desc:"Combines everything learned. ⭐ Optional Challenge: Deploy everything online (Frontend to Vercel, Backend to Render).", stack:["FULL STACK"] }
       ],
       milestones: [["CGPA","8.5 – 9.5+"],["DSA problems","150–200 solved"],["Projects shipped","6–8 deployed"],["GitHub commits","300+"],["Portfolio","Live website"],["Blog posts","3–5 published"]]
     },
     {
-      id: 2, label: "Year 2", window: "2027–28", theme: "Engineer",
-      goal: "Become an engineer, not just a coder",
+      id: 2, label: "Year 2", window: "2027–28", theme: "Full Stack Development",
+      goal: "Become internship ready.",
       months: [
-        { name:"Month 1", focus:["C++ — classes, objects, constructors, inheritance, polymorphism","DSA — arrays, binary search, two pointers, prefix sum","Backend — FastAPI or Node.js + Express"],
-          dsa:25, project:"Student Management System (CLI)", desc:"C++ CLI app modelling students with OOP fundamentals.", stack:["C++","OOP"] },
-        { name:"Month 2", focus:["OOP consolidation, Digital Logic concepts","DSA — linked list, stack, queue, deque","REST APIs, CRUD, JSON, Postman · PostgreSQL keys & relations"],
-          dsa:25, project:"Library Management API", desc:"CRUD REST API backed by PostgreSQL.", stack:["POSTGRESQL","REST"] },
-        { name:"Month 3", focus:["SOLID principles · Design patterns — Singleton, Factory, Strategy","Professional Git — rebase, cherry-pick, conflict resolution","DSA — hash maps, sets, priority queues, heaps"],
-          dsa:25, project:"Expense Tracker API", desc:"Authenticated expense API using design patterns & clean Git flow.", stack:["API","AUTH"] },
-        { name:"Month 4", focus:["Computer Organization — registers, cache, virtual memory, instruction cycle","Cloud deploy — Render / Railway","DSA — binary trees, BST, traversals"],
-          dsa:30, project:"Task Management API", desc:"Task API built on a cloud-deployed, computer-organization-aware backend.", stack:["API","CLOUD"] },
-        { name:"Month 5", focus:["Revision — OOP, DSA, SQL, Computer Organization"],
-          dsa:15, project:"Full Stack Task Manager", desc:"Capstone — React + FastAPI + Postgres, deployed publicly.", stack:["REACT","FASTAPI","POSTGRESQL"] },
-        { name:"Month 6 (Winter Break)", focus:["Auth — JWT, OAuth basics, password hashing","Docker — images, containers, Docker Compose"],
-          dsa:10, project:"Authentication Service", desc:"Standalone JWT/OAuth auth microservice, containerized.", stack:["JWT","DOCKER"] },
-        { name:"Month 7", focus:["Algorithms — Divide & Conquer, Greedy","AI — ML fundamentals (regression, classification, clustering)"],
-          dsa:20, project:"Sorting Visualizer", desc:"Visualize divide & conquer and greedy sorting algorithms.", stack:["JAVASCRIPT","ALGORITHMS"] },
-        { name:"Month 8", focus:["Algorithms — intro to Dynamic Programming","React — routing, Context API, hooks","Database — transactions, indexing, normalization"],
-          dsa:20, project:"Blog Platform", desc:"Full blog app with routing, Context API and a normalized DB.", stack:["REACT","SQL"] },
-        { name:"Month 9", focus:["Computer Architecture — cache hierarchy, paging, pipelining, branch prediction","AI — embeddings, tokenization, vector search"],
-          dsa:15, project:"AI PDF Chat Assistant", desc:"Chat over PDFs using embeddings and vector search.", stack:["AI","EMBEDDINGS"] },
-        { name:"Month 10", focus:["DevOps — Docker Compose, env vars, NGINX, GitHub Actions CI/CD"],
-          dsa:10, project:"Containerize the Blog Platform", desc:"Docker Compose, env vars and NGINX in front of the blog.", stack:["DOCKER","NGINX"] },
-        { name:"Month 11", focus:["Networking — HTTP, HTTPS, DNS, TCP/IP, WebSockets","Redis & caching strategies"],
-          dsa:15, project:"Real-Time Chat Application", desc:"WebSocket chat backed by Redis pub/sub.", stack:["WEBSOCKETS","REDIS"] },
-        { name:"Month 12", focus:["Capstone revision — Algorithms, Architecture, SQL, React, Backend, Docker","Open source — aim for 2–5 merged pull requests","Reading — Clean Code, The Pragmatic Programmer"],
-          dsa:15, project:"AI Study Assistant", desc:"Notes + search + PDF upload + AI chat — capstone for the year.", stack:["AI","FULL STACK"] }
+        { name:"Month 1", focus:["PostgreSQL", "Express", "React"],
+          dsa:25, project:"Student Management System (Phase 1)", desc:"Build relational data models, secure login gates, and backend attendance logic.", stack:["POSTGRESQL", "EXPRESS"] },
+        { name:"Month 2", focus:["PostgreSQL", "Express", "React"],
+          dsa:25, project:"Student Management System (Phase 2)", desc:"Construct the interactive frontend dashboard for viewing attendance and grades.", stack:["REACT", "FULL STACK"] },
+        { name:"Month 3", focus:["Full Stack", "Authentication"],
+          dsa:25, project:"Task Management Platform (Phase 1)", desc:"Engineer backend logic for teams, boards, and secure task assignments.", stack:["NODE.JS", "EXPRESS"] },
+        { name:"Month 4", focus:["Full Stack", "Authentication"],
+          dsa:30, project:"Task Management Platform (Phase 2)", desc:"Develop frontend boards and status workflows for seamless task management.", stack:["REACT", "FULL STACK"] },
+        { name:"Month 5", focus:["SQL", "Backend", "Forms"],
+          dsa:15, project:"College Event Portal (Phase 1)", desc:"Set up event registration backend routes and complex form validation.", stack:["SQL", "BACKEND"] },
+        { name:"Month 6 (Winter Break)", focus:["SQL", "Backend", "Forms"],
+          dsa:10, project:"College Event Portal (Phase 2)", desc:"Implement automated certificate generation and full event management controls.", stack:["FULL STACK"] },
+        { name:"Month 7", focus:["APIs", "Charts", "Data Visualization"],
+          dsa:20, project:"GitHub + LeetCode Dashboard (Phase 1)", desc:"Write automated scripts to fetch live coding metrics and stats from public APIs.", stack:["APIs", "JAVASCRIPT"] },
+        { name:"Month 8", focus:["APIs", "Charts", "Data Visualization"],
+          dsa:20, project:"GitHub + LeetCode Dashboard (Phase 2)", desc:"Render dynamic charts displaying GitHub stats and LeetCode progress.", stack:["CHARTS", "DATA VIS"] },
+        { name:"Month 9", focus:["Full Stack", "CRUD", "Search"],
+          dsa:15, project:"Blogging Platform (Phase 1)", desc:"Build a rich text editor and secure authoring workflows for creating content.", stack:["FULL STACK", "AUTH"] },
+        { name:"Month 10", focus:["Full Stack", "CRUD", "Search"],
+          dsa:10, project:"Blogging Platform (Phase 2)", desc:"Implement nested commenting systems and full-text search capabilities.", stack:["FULL STACK", "SEARCH"] },
+        { name:"Month 11", focus:["Academics", "Attendance", "Projects Tracking"],
+          dsa:15, project:"Trajectory v2 (Phase 1)", desc:"Combine academics, attendance, and project tracking into one unified schema.", stack:["REACT", "POSTGRESQL"] },
+        { name:"Month 12", focus:["GitHub", "LeetCode", "Integration"],
+          dsa:15, project:"Trajectory v2 (Phase 2)", desc:"Integrate external API stats. ⭐ Optional Challenge: Add real-time notifications.", stack:["FULL STACK"] }
       ],
       milestones: [["CGPA","8.5 – 9.5+"],["DSA problems","350–450 cumulative"],["Projects shipped","12–15 polished apps"],["GitHub commits","700+"],["Open source","2–5 merged PRs"],["Blog posts","8–10 published"]]
     },
     {
       id: 3, label: "Year 3", window: "2028–29", theme: "Industry Ready",
-      goal: "Become industry ready",
+      goal: "Build production-quality applications.",
       months: [
-        { name:"Month 1", focus:["DBMS — transactions, ACID, isolation levels, indexing, query optimization","OS — introduction & core paradigms","Backend — advanced SQL, ORMs (SQLAlchemy/Prisma), repository pattern"],
-          dsa:25, project:"Student ERP Backend", desc:"JWT + RBAC ERP backend on Postgres, fully containerized.", stack:["POSTGRESQL","RBAC"] },
-        { name:"Month 2", focus:["OS deep-dive — scheduling, synchronization, deadlocks, virtual memory","Linux — SSH, bash scripting, cron jobs, monitoring","AWS — IAM, EC2, S3"],
-          dsa:20, project:"Cloud-Native Infra Deployment", desc:"Migrate the ERP onto AWS EC2, S3 and IAM.", stack:["AWS","CLOUD"] },
-        { name:"Month 3", focus:["Automata Theory — DFA/NFA, regular expressions, CFGs","System Design — scalability, load balancers, reverse proxy, caching","AI — embeddings, vector databases, RAG pipelines"],
-          dsa:20, project:"Enterprise AI Document Assistant", desc:"Secure PDF RAG pipeline with citations and streaming chat.", stack:["RAG","VECTOR DB"] },
-        { name:"Month 4", focus:["DevOps — Docker Compose, GitHub Actions CI/CD, NGINX","Testing — unit, integration, API endpoint suites","DSA — BFS, DFS, shortest path"],
-          dsa:30, project:"Scalable Learning Management System", desc:"React + FastAPI + Postgres LMS with full Docker orchestration.", stack:["REACT","FASTAPI"] },
-        { name:"Month 5", focus:["Microprocessors — registers, interrupts, instruction execution, assembly","AI — prompt evaluation, function calling, context window, tokenization"],
-          dsa:15, project:"AI-Powered Resume Analyzer", desc:"Deployed resume analyzer using LLM tooling & public auth.", stack:["AI","LLM"] },
-        { name:"Month 6 (Winter Break + Networks)", focus:["Placement prep — resume, LinkedIn, mock interviews","Computer Networks — TCP/IP, UDP, HTTP/HTTPS, DNS, routing, OSI","Redis, WebSockets, distributed session management"],
-          dsa:15, project:"Real-Time Collaboration Platform", desc:"Distributed real-time collaboration over WebSockets & Redis.", stack:["WEBSOCKETS","REDIS"] },
-        { name:"Month 7", focus:["Software Engineering — SDLC, Agile/Scrum, UML, requirements, design patterns","Git workflows — PRs, code review, branching strategy (Gitflow)"],
-          dsa:10, project:"Enterprise Issue Tracking System", desc:"Agile issue tracker with structured Git workflows.", stack:["REACT","AGILE"] },
-        { name:"Month 8", focus:["Serverless — AWS Lambda, API Gateway, RDS","Telemetry — CloudWatch, unified logging, alerting"],
-          dsa:10, project:"Serverless URL Shortener", desc:"AWS Lambda + API Gateway + RDS, monitored via CloudWatch.", stack:["AWS LAMBDA","SERVERLESS"] },
-        { name:"Month 9", focus:["Distributed Systems — consistent hashing, message queues, CDN, CAP theorem","AI — autonomous agents, tool calling, memory, evaluation"],
-          dsa:10, project:"Multi-Agent Research Assistant Engine", desc:"Autonomous AI agents with tool calling and shared memory.", stack:["AI AGENTS","TOOL CALLING"] },
-        { name:"Month 10", focus:["Security — OAuth 2.0, JWT, HTTPS, E2E encryption, password hashing, OWASP Top 10","Performance — profiling, micro-benchmarking, optimization"],
-          dsa:10, project:"Hardened Auth & Identity Microservice", desc:"OAuth2 identity service hardened against the OWASP Top 10.", stack:["OAUTH2","SECURITY"] },
-        { name:"Month 11", focus:["Open source — resolve issues, improve docs, manage PR reviews (5–10 merged)","Portfolio v2 — architecture diagrams, live demos, case studies"],
-          dsa:10, project:"Portfolio Platform v2", desc:"Portfolio v2 with architecture diagrams and live demos.", stack:["PORTFOLIO","DOCS"] },
-        { name:"Month 12", focus:["Full review — DBMS, OS, Networks, Software Engineering, System Design","Tool review — Docker, AWS, Linux administration"],
-          dsa:10, project:"Capstone (pick one)", desc:"Choose one: AI Workspace, Agile Hub, Cloud Storage or Code Editor.", stack:["CAPSTONE"] }
+        { name:"Month 1", focus:["Architecture", "Large Databases"],
+          dsa:25, project:"College ERP (Phase 1: Architecture)", desc:"Design the master database schema for tracking Students, Faculty, and Grades.", stack:["ARCHITECTURE", "DATABASES"] },
+        { name:"Month 2", focus:["Architecture", "Large Databases"],
+          dsa:20, project:"College ERP (Phase 2: Core Modules)", desc:"Develop robust APIs and endpoints for student attendance and faculty grading.", stack:["BACKEND", "SQL"] },
+        { name:"Month 3", focus:["Architecture", "Large Databases"],
+          dsa:20, project:"College ERP (Phase 3: Timetable Engine)", desc:"Write conflict-detection logic and complex queries for automated course scheduling.", stack:["ALGORITHMS", "DATABASES"] },
+        { name:"Month 4", focus:["Architecture", "Large Databases"],
+          dsa:30, project:"College ERP (Phase 4: Optimization)", desc:"Finalize administrative interfaces and tune query performance for scale.", stack:["OPTIMIZATION", "FULL STACK"] },
+        { name:"Month 5", focus:["OpenAI API", "Prompt Engineering", "RAG Basics"],
+          dsa:15, project:"AI Study Assistant (Phase 1: PDF Chat)", desc:"Build secure pipelines to upload, extract, and chunk text from study PDFs.", stack:["OPENAI API", "RAG"] },
+        { name:"Month 6 (Winter Break)", focus:["OpenAI API", "Prompt Engineering", "RAG Basics"],
+          dsa:15, project:"AI Study Assistant (Phase 2: Smart Notes)", desc:"Wire extracted text into conversational AI prompts for smart note generation.", stack:["PROMPT ENGINEERING"] },
+        { name:"Month 7", focus:["OpenAI API", "Prompt Engineering", "RAG Basics"],
+          dsa:10, project:"AI Study Assistant (Phase 3: Flashcards)", desc:"Generate automated, structured flashcards directly from uploaded lecture notes.", stack:["AI", "REACT"] },
+        { name:"Month 8", focus:["OpenAI API", "Prompt Engineering", "RAG Basics"],
+          dsa:10, project:"AI Study Assistant (Phase 4: Quiz Generator)", desc:"Engineer an LLM-driven quiz generator enforcing strict JSON structural outputs.", stack:["AI", "FULL STACK"] },
+        { name:"Month 9", focus:["Full Stack", "PDF Generation", "Advanced UI"],
+          dsa:10, project:"Placement Portal (Phase 1: Resume Builder)", desc:"Engineer a dynamic, responsive form that generates formatted, exportable PDFs.", stack:["FULL STACK", "PDF GEN"] },
+        { name:"Month 10", focus:["Full Stack", "PDF Generation", "Advanced UI"],
+          dsa:10, project:"Placement Portal (Phase 2: Job Tracker)", desc:"Build a robust application tracking pipeline and a master company database.", stack:["ADVANCED UI", "DATABASE"] },
+        { name:"Month 11", focus:["Full Stack", "PDF Generation", "Advanced UI"],
+          dsa:10, project:"Placement Portal (Phase 3: Analytics)", desc:"Generate success rate metrics and collaborative interview note repositories.", stack:["FULL STACK", "ANALYTICS"] },
+        { name:"Month 12", focus:["Full Stack", "Advanced UI", "Optimization"],
+          dsa:10, project:"Placement Portal (Phase 4: Wrap & Deploy)", desc:"Finalize the portal. ⭐ Optional Challenge: Add Redis caching, background jobs, Docker Compose, and Cloud deployment.", stack:["DEPLOYMENT", "REDIS"] }
       ],
       milestones: [["CGPA","8.5 – 9.5+"],["DSA problems","600–700 cumulative"],["Projects shipped","18–20 repositories"],["GitHub commits","1,200+"],["Open source","5–10 merged PRs"],["AI systems shipped","3 production apps"]]
     },
     {
-      id: 4, label: "Year 4", window: "2029–30", theme: "AI-Proof Engineer",
-      goal: "Solve real problems, lead projects, launch a career",
+      id: 4, label: "Year 4", window: "2029–30", theme: "Capstone",
+      goal: "One entire year. Students choose one domain (e.g. AI Academic Planner, Healthcare, SaaS).",
       months: [
-        { name:"Month 1", focus:["Finalize electives & scope the Major Project, secure a guide","System Design — API design, scalability, DB selection, monolith vs microservices","Lock in an AI specialization — LLM apps / ML pipelines / CV / NLP"],
-          dsa:10, project:"Major Project — Engineering Plan", desc:"Requirements doc, architecture diagrams and DB schema for the capstone.", stack:["SYSTEM DESIGN"] },
-        { name:"Month 2", focus:["Cloud — AWS ECS, ECR, VPC, Route 53","DevOps — Terraform IaC, secrets management"],
-          dsa:10, project:"Major Project — Core Backend", desc:"Decoupled microservices layer on AWS ECS/ECR/VPC.", stack:["AWS","MICROSERVICES"] },
-        { name:"Month 3", focus:["AI Engineering — model evaluation, agent architectures, function calling, structured outputs","Edge security — secure API design, rate limiting, input validation"],
-          dsa:10, project:"Major Project — AI Integration", desc:"Agent architectures, function calling and structured outputs.", stack:["AI AGENTS"] },
-        { name:"Month 4", focus:["Distributed Systems — message queues, Kafka, event-driven architecture","Observability — Prometheus, Grafana, centralized logging"],
-          dsa:10, project:"Major Project — Telemetry", desc:"Prometheus, Grafana and centralized logging hooked in.", stack:["OBSERVABILITY"] },
-        { name:"Month 5", focus:["Interview review — DSA, OS, DBMS, Networks, OOP + mock system design"],
-          dsa:15, project:"Major Project — Phase I Beta", desc:"Containerized public beta with baseline validation.", stack:["DEPLOYMENT"] },
-        { name:"Month 6 (Winter Break)", focus:["Placement sprint — mock interviews, resume, portfolio, behavioral prep","UX polish, query optimization, E2E tests","Advanced AI — fine-tuning, LoRA, quantization, local LLMs"],
-          dsa:10, project:"Major Project — UX Refinement", desc:"UI/UX polish, query optimization and end-to-end tests.", stack:["UX","TESTING"] },
-        { name:"Month 7", focus:["Open source — target 10–15 merged pull requests"],
-          dsa:10, project:"Major Project — Public Release v1.0", desc:"Production launch with public docs and a live codebase.", stack:["RELEASE"] },
-        { name:"Month 8", focus:["Target tier-1 companies, AI startups, research labs, grad programs","Overhaul resume, GitHub, LinkedIn, personal website"],
-          dsa:10, project:"Digital Profile Overhaul", desc:"Resume, GitHub and personal site rebuilt for recruiting season.", stack:["CAREER"] },
-        { name:"Month 9", focus:["Refactoring — design pattern overhaul, clean architecture, domain-driven design"],
-          dsa:5, project:"Major Project — Architectural Refactor", desc:"Clean architecture and DDD boundaries enforced across the codebase.", stack:["REFACTOR","DDD"] },
-        { name:"Month 10", focus:["Read AI/DL papers, distributed systems whitepapers, top engineering blogs","Technical authorship — blog posts, case studies"],
-          dsa:5, project:"Technical Case Studies", desc:"Deep-dive write-ups on solved scalability bottlenecks.", stack:["WRITING"] },
-        { name:"Month 11", focus:["Final review sprints — DSA, System Design, SQL, OS, DBMS, Networks, OOP","Live mock interviews & behavioral practice"],
-          dsa:10, project:"Interview Rehearsal", desc:"Rehearse system design & DSA defenses for interviews.", stack:["INTERVIEW PREP"] },
-        { name:"Month 12", focus:["Major Project Phase II submission, viva prep, GitHub cleanup","Onboarding prep for chosen team / lab"],
-          dsa:5, project:"Major Project — Final Submission", desc:"Phase II submission, viva and final GitHub cleanup.", stack:["CAPSTONE"] }
+        { name:"Month 1", focus:["Planning", "Requirements"],
+          dsa:10, project:"Capstone: Planning & Requirements", desc:"Select a major domain, define user stories, and outline system requirements.", stack:["SYSTEM DESIGN"] },
+        { name:"Month 2", focus:["Architecture"],
+          dsa:10, project:"Capstone: Architecture", desc:"Draft technical specs, map complex database schemas, and define API boundaries.", stack:["ARCHITECTURE"] },
+        { name:"Month 3", focus:["Database", "Authentication"],
+          dsa:10, project:"Capstone: Database & Auth", desc:"Establish secure authentication layers and implement the production database.", stack:["DATABASE", "AUTH"] },
+        { name:"Month 4", focus:["Backend"],
+          dsa:10, project:"Capstone: Core Backend", desc:"Engineer the foundational backend services, REST/GraphQL APIs, and server logic.", stack:["BACKEND"] },
+        { name:"Month 5", focus:["Frontend", "Responsive Design"],
+          dsa:15, project:"Capstone: Frontend Foundation", desc:"Develop the primary user interface components and ensure mobile responsiveness.", stack:["FRONTEND"] },
+        { name:"Month 6 (Winter Break)", focus:["Dashboards"],
+          dsa:10, project:"Capstone: Dashboards & UI", desc:"Connect UI components to backend endpoints and finalize master dashboards.", stack:["DASHBOARDS"] },
+        { name:"Month 7", focus:["AI Features", "Recommendations"],
+          dsa:10, project:"Capstone: AI Integration", desc:"Integrate intelligent recommendations or search optimization features.", stack:["AI"] },
+        { name:"Month 8", focus:["Automation"],
+          dsa:10, project:"Capstone: Automation Workflows", desc:"Implement background processing, cron jobs, and automated platform workflows.", stack:["AUTOMATION"] },
+        { name:"Month 9", focus:["Testing"],
+          dsa:5, project:"Capstone: Testing & QA", desc:"Write comprehensive unit/integration test suites and execute end-to-end bug hunts.", stack:["TESTING"] },
+        { name:"Month 10", focus:["Optimization", "Deployment"],
+          dsa:5, project:"Capstone: Optimization & Deploy", desc:"Optimize application performance and set up CI/CD pipelines for cloud deployment.", stack:["DEPLOYMENT"] },
+        { name:"Month 11", focus:["Documentation", "Portfolio"],
+          dsa:10, project:"Capstone: Documentation & Polish", desc:"Write extensive technical READMEs, API docs, and prepare a live portfolio demo.", stack:["DOCS", "PORTFOLIO"] },
+        { name:"Month 12", focus:["Presentation", "Placement Prep"],
+          dsa:5, project:"Capstone: Presentation & Launch", desc:"Prepare the final project presentation, rehearsal, and rigorous placement interview prep.", stack:["CAREER", "INTERVIEW PREP"] }
       ],
       milestones: [["CGPA","8.5 – 9.5+"],["DSA problems","800–1,000 cumulative"],["Projects shipped","22–25 repositories"],["GitHub commits","1,800+"],["Open source","10–15 merged PRs"],["Career offers","1–3 tier-1 offers"]]
     }
@@ -150,44 +148,200 @@ const CURRICULUM = {
     skill: {
       title: "Skill sprint",
       tasks: [
-        "Learn Python variables, data types and basic operators",
-        "Learn Python control flow — if/else, loops, and writing your first functions",
-        "Learn Python functions in depth — parameters, return values, default args, and scope",
-        "Read the first 5 chapters of \"Automate the Boring Stuff with Python\"",
-        "Solve 20 easy problems on LeetCode (arrays, strings, basic loops) to build real fluency before Month 1's DSA targets start",
-        "Learn basic command-line tools (ls, cd, grep, cat, mkdir) well enough to navigate without a GUI"
+        { id:"skill-hello-python", tier:1, text:"Install Python and run your first script — print your name and today's date" },
+        { id:"skill-vars", tier:1, text:"Learn Python variables, data types and basic operators" },
+        { id:"skill-cli", tier:2, text:"Learn basic command-line tools (ls, cd, grep, cat, mkdir) well enough to navigate without a GUI" },
+        { id:"skill-control-flow", tier:2, text:"Learn Python control flow — if/else, loops, and writing your first functions" },
+        { id:"skill-functions-depth", tier:3, text:"Learn Python functions in depth — parameters, return values, default args, and scope" },
+        { id:"skill-leetcode20", tier:3, text:"Solve 20 easy problems on LeetCode (arrays, strings, basic loops) to build real fluency before Month 1's DSA targets start" },
+        { id:"skill-atbswp", tier:4, text:"Read the first 5 chapters of \"Automate the Boring Stuff with Python\"" }
       ]
     },
     academic: {
       title: "Academic focus",
       tasks: [
-        "Understand binary, decimal and hexadecimal number systems, and practice converting between them by hand until it's fast",
-        "Learn what AI, ML, DL and LLMs are at a conceptual level, well enough to explain each in one sentence",
-        "Read about how a computer executes a program at a high level (what a CPU actually does)",
-        "Learn what time complexity and Big-O notation mean, and classify 5 simple code snippets by their complexity",
-        "Read a short primer on how Git actually tracks changes (commits, staging, working directory) — not just the commands"
+        { id:"ac-numbersystems", tier:1, text:"Understand binary, decimal and hexadecimal number systems, and practice converting between them by hand" },
+        { id:"ac-ai-concepts", tier:1, text:"Learn what AI, ML, DL and LLMs are at a conceptual level, well enough to explain each in one sentence" },
+        { id:"ac-bigo", tier:2, text:"Learn what time complexity and Big-O notation mean, and classify 5 simple code snippets by their complexity" },
+        { id:"ac-cpu", tier:3, text:"Read about how a computer executes a program at a high level (what a CPU actually does)" },
+        { id:"ac-git-internals", tier:4, text:"Read a short primer on how Git actually tracks changes (commits, staging, working directory) — not just the commands" }
       ]
     },
     project: {
       title: "Project push",
       tasks: [
-        "Install VS Code, set up the Python extension, and set up a Linux environment (WSL/Ubuntu) or dual boot",
-        "Create a GitHub account, install Git, and make your first commit to a scratch repo",
-        "Write a 20-line Python script that adds, subtracts, multiplies and divides two numbers from user input — a rough first pass at Month 1's Scientific Calculator project",
-        "Extend that script with a menu loop so it keeps running until the user chooses to quit",
-        "Add input validation to the calculator — handle divide-by-zero and non-numeric input without crashing",
-        "Push the finished calculator to GitHub as your first real repo, with a short README describing what it does and how to run it"
+        { id:"proj-setup-tools", tier:1, text:"Install VS Code, set up the Python extension, and set up a Linux environment (WSL/Ubuntu) or dual boot" },
+        { id:"proj-github-first-commit", tier:1, text:"Create a GitHub account, install Git, and make your first commit to a scratch repo" },
+        { id:"proj-calc-basic", tier:2, text:"Write a 20-line Python script that adds, subtracts, multiplies and divides two numbers from user input — a rough first pass at Month 1's project" },
+        { id:"proj-calc-menu-validate", tier:3, text:"Extend that script with a menu loop and input validation — handle divide-by-zero and non-numeric input without crashing" },
+        { id:"proj-calc-push", tier:4, text:"Push the finished script to GitHub as your first real repo, with a short README describing what it does and how to run it" }
       ]
     }
+  },
+
+  advanced_track: {
+    title: "⭐ Advanced Challenges (15+ LPA Track)",
+    description: "These never replace the main roadmap. They appear as optional stretch goals.",
+    categories: [
+      {
+        name: "Backend",
+        skills: ["Redis", "GraphQL", "Microservices", "gRPC", "WebRTC"]
+      },
+      {
+        name: "Cloud",
+        skills: ["AWS", "Terraform", "Kubernetes", "CI/CD Pipelines"]
+      },
+      {
+        name: "AI",
+        skills: ["LangChain", "MCP", "Multi-Agent Systems", "Fine-Tuning", "LoRA", "Vector Databases"]
+      },
+      {
+        name: "Software Engineering",
+        skills: ["System Design", "Design Patterns", "Event-Driven Architecture", "Distributed Systems", "Observability", "Performance Optimization"]
+      }
+    ]
   }
 };
 
-/* ============================================================
-   WEEK_BLUEPRINTS — hand-authored, project-specific weekly tasks
-   192 entries (4 years × 12 months × 4 weeks). Each week's skill,
-   academic and project tasks are tied to that month's actual
-   project, stack and focus topics rather than generic filler.
-   ============================================================ */
+
+const TRACKS = {
+  "ai-ml": {
+    id: "ai-ml", label: "AI & Machine Learning", tagline: "Models, data, and systems that learn.",
+    blurb: "You lean toward building intelligent systems — recommenders, LLM apps, computer vision, predictive models. Lean into the AI electives and ML fundamentals threaded through every year."
+  },
+  "fullstack": {
+    id: "fullstack", label: "Full-Stack / Product Engineering", tagline: "Ship products people actually use.",
+    blurb: "You like owning a feature end-to-end, UI down to the database. Lean into React, backend APIs, and shipping polished, deployed products every month."
+  },
+  "systems": {
+    id: "systems", label: "Backend & Systems Engineering", tagline: "Performance, infrastructure, and things that scale.",
+    blurb: "You're drawn to how things work under the hood — OS internals, databases, distributed systems, cloud infra. Lean into Computer Organization, OS, Networks and DevOps electives."
+  },
+  "data": {
+    id: "data", label: "Data & Analytics", tagline: "Numbers, patterns, and decisions.",
+    blurb: "You like turning raw data into insight — dashboards, statistics, pipelines. Lean into SQL depth, data-engineering electives and analytics-flavored project variants."
+  },
+  "security": {
+    id: "security", label: "Cybersecurity & Security Engineering", tagline: "Break it, then defend it.",
+    blurb: "You think like an attacker so you can build better defenses. Lean into networks, cryptography, OWASP practice and the security electives."
+  },
+  "generalist": {
+    id: "generalist", label: "Full-Stack Generalist", tagline: "A bit of everything, fundamentals first.",
+    blurb: "No pressure to pick yet — this keeps you broad across web, backend, DSA and a taste of AI so you can specialize later once you've actually seen more of the field."
+  }
+};
+
+
+
+
+
+
+
+
+
+const QUIZ = [
+  {
+    id: "q1", weight: 3,
+    prompt: "What are you most excited to build?",
+    options: [
+      { label: "An app people open every day", track: "fullstack" },
+      { label: "A model that predicts or generates something", track: "ai-ml" },
+      { label: "Infrastructure that keeps big systems running", track: "systems" },
+      { label: "Not sure yet", track: "generalist" }
+    ]
+  },
+  {
+    id: "q2", weight: 3,
+    prompt: "Pick a weekend side project.",
+    options: [
+      { label: "Scrape and visualize a dataset you're curious about", track: "data" },
+      { label: "Build a small SaaS landing page and signup flow", track: "fullstack" },
+      { label: "Poke at your own home network's security (legally)", track: "security" },
+      { label: "Fine-tune a tiny model on data you collected", track: "ai-ml" }
+    ]
+  },
+  {
+    id: "q3", weight: 3,
+    prompt: "Which headline would you actually click on?",
+    options: [
+      { label: "\"New framework cuts frontend load time in half\"", track: "fullstack" },
+      { label: "\"Researchers train a model to do X with less data\"", track: "ai-ml" },
+      { label: "\"How this company handles a million requests a second\"", track: "systems" },
+      { label: "\"Breach exposes millions of records — here's how\"", track: "security" }
+    ]
+  },
+  {
+    id: "q4", weight: 2,
+    prompt: "What's most fun to actually debug at 2am?",
+    options: [
+      { label: "A UI component that won't render right", track: "fullstack" },
+      { label: "A training loop whose loss won't drop", track: "ai-ml" },
+      { label: "A server that keeps falling over under load", track: "systems" },
+      { label: "A query that's leaking data it shouldn't", track: "security" }
+    ]
+  },
+  {
+    id: "q5", weight: 2,
+    prompt: "In a group project, which piece do you volunteer for?",
+    options: [
+      { label: "The UI/UX and making it feel polished", track: "fullstack" },
+      { label: "The data pipeline and reporting numbers", track: "data" },
+      { label: "The deployment, servers, and making sure it stays up", track: "systems" },
+      { label: "Whatever's needed — I like seeing the whole picture", track: "generalist" }
+    ]
+  },
+  {
+    id: "q6", weight: 2,
+    prompt: "Which of these would you rather spend a whole afternoon reading about?",
+    options: [
+      { label: "Design systems and component libraries", track: "fullstack" },
+      { label: "How neural networks actually learn", track: "ai-ml" },
+      { label: "How databases index and query data at scale", track: "systems" },
+      { label: "Real-world exploits and how they were patched", track: "security" }
+    ]
+  },
+  {
+    id: "q7", weight: 2,
+    prompt: "A dataset lands on your desk with no instructions. What's your instinct?",
+    options: [
+      { label: "Clean it up and find the story in the numbers", track: "data" },
+      { label: "See if a model could predict something useful from it", track: "ai-ml" },
+      { label: "Figure out where it should live and how to query it fast", track: "systems" },
+      { label: "Check if it should even have left wherever it came from", track: "security" }
+    ]
+  },
+  {
+    id: "q8", weight: 1,
+    prompt: "Preferred pace of feedback on your work?",
+    options: [
+      { label: "Instant — I want to see it change on screen as I type", track: "fullstack" },
+      { label: "Slower and quantitative — metrics improving over training runs", track: "ai-ml" },
+      { label: "Doesn't matter, as long as it's correct and stays correct", track: "systems" },
+      { label: "No strong preference", track: "generalist" }
+    ]
+  },
+  {
+    id: "q9", weight: 1,
+    prompt: "Which tool would you be happiest getting really good at?",
+    options: [
+      { label: "React or a modern frontend framework", track: "fullstack" },
+      { label: "PyTorch or a similar ML framework", track: "ai-ml" },
+      { label: "SQL and a BI/analytics tool", track: "data" },
+      { label: "A pentesting or network-analysis toolkit", track: "security" }
+    ]
+  },
+  {
+    id: "q10", weight: 1,
+    prompt: "How locked-in is your specialization, honestly?",
+    options: [
+      { label: "Pretty confident — I know roughly what I want", track: null },
+      { label: "I have a leaning, but I'm not locked in", track: null },
+      { label: "No idea yet — show me a bit of everything", track: "generalist", forceGeneralist: true }
+    ]
+  }
+];
+
+
 const WEEK_BLUEPRINTS = [
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 1", weekInMonth: 1,
@@ -312,7 +466,7 @@ const WEEK_BLUEPRINTS = [
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 6 (Winter Break)", weekInMonth: 1,
     skill: { title: "Skill sprint", tasks: ["Learn what React is conceptually and set up your first React project", "Solve 5 DSA problems, mixed review"] },
-    academic: { title: "Academic focus", tasks: ["Read how a React component tree renders to the DOM", "Draw the component tree for the Notes App you're about to build"] },
+    academic: { title: "Academic focus", tasks: ["Read how a React component tree renders to the DOM", "Draw the component tree for the Spaced-Repetition Lecture Notes App you're about to build"] },
     project: { title: "Project push", tasks: ["Scaffold the React app and build the static layout for note cards", "Set up local state to hold an array of notes"] }
   },
   {
@@ -331,7 +485,7 @@ const WEEK_BLUEPRINTS = [
     yearId: 1, yearLabel: "Year 1", monthName: "Month 6 (Winter Break)", weekInMonth: 4,
     skill: { title: "Skill sprint", tasks: ["Learn HTTP fundamentals — methods, status codes, headers", "Solve 5 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review the whole break module — React, npm, REST, HTTP", "Write a one-page cheat sheet for the four topics"] },
-    project: { title: "Project push", tasks: ["Polish styling and empty/loading states", "Deploy the Notes App and link it from your portfolio"] }
+    project: { title: "Project push", tasks: ["Polish styling and empty/loading states", "Deploy the Spaced-Repetition Lecture Notes App and link it from your portfolio"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 7", weekInMonth: 1,
@@ -354,8 +508,8 @@ const WEEK_BLUEPRINTS = [
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 7", weekInMonth: 4,
     skill: { title: "Skill sprint", tasks: ["Learn React state with useState and controlled inputs", "Solve 5 DSA problems, mixed review"] },
-    academic: { title: "Academic focus", tasks: ["Compare your To-Do App's component structure with a reference example", "List 2 improvements you'd make to your component breakdown"] },
-    project: { title: "Project push", tasks: ["Polish UI, add priority color-coding", "Deploy the To-Do App and add it to your portfolio"] }
+    academic: { title: "Academic focus", tasks: ["Compare your Sleep-Cycle & Study-Habit Tracker's component structure with a reference example", "List 2 improvements you'd make to your component breakdown"] },
+    project: { title: "Project push", tasks: ["Polish UI, add priority color-coding", "Deploy the Sleep-Cycle & Study-Habit Tracker and add it to your portfolio"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 8", weekInMonth: 1,
@@ -372,7 +526,7 @@ const WEEK_BLUEPRINTS = [
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 8", weekInMonth: 3,
     skill: { title: "Skill sprint", tasks: ["Learn SQL joins — inner, left, and when to use each", "Write 5 practice queries using joins"] },
-    academic: { title: "Academic focus", tasks: ["Design the normalized schema for the Notes API (notes, tags, users)", "Draw an ER diagram for the schema"] },
+    academic: { title: "Academic focus", tasks: ["Design the normalized schema for the Library Reservation & Notes API (notes, tags, users)", "Draw an ER diagram for the schema"] },
     project: { title: "Project push", tasks: ["Implement tagging notes and a join-based endpoint to filter notes by tag", "Add pagination to the list-notes endpoint"] }
   },
   {
@@ -384,7 +538,7 @@ const WEEK_BLUEPRINTS = [
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 9", weekInMonth: 1,
     skill: { title: "Skill sprint", tasks: ["Learn how JWTs are structured and how they're signed/verified", "Solve 5 DSA problems, mixed review"] },
-    academic: { title: "Academic focus", tasks: ["Compare JWT-based auth vs session-based auth for a given app", "Write a short note on which you'd choose for the Notes API and why"] },
+    academic: { title: "Academic focus", tasks: ["Compare JWT-based auth vs session-based auth for a given app", "Write a short note on which you'd choose for the Library Reservation & Notes API and why"] },
     project: { title: "Project push", tasks: ["Build the signup endpoint with password hashing", "Build the login endpoint that issues a JWT on success"] }
   },
   {
@@ -433,19 +587,19 @@ const WEEK_BLUEPRINTS = [
     yearId: 1, yearLabel: "Year 1", monthName: "Month 11", weekInMonth: 1,
     skill: { title: "Skill sprint", tasks: ["Learn Docker basics — what a container and image actually are", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Compare running an app locally vs inside a container — what changes", "Write a short note on 2 problems Docker solves that you've personally hit"] },
-    project: { title: "Project push", tasks: ["Write a Dockerfile for the Expense Tracker and get it running in a container", "Write a Dockerfile for the Weather App and get it running in a container"] }
+    project: { title: "Project push", tasks: ["Write a Dockerfile for the Appliance Load & Electricity Bill Tracker and get it running in a container", "Write a Dockerfile for the Local Market Price & Weather Advisory App and get it running in a container"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 11", weekInMonth: 2,
     skill: { title: "Skill sprint", tasks: ["Learn to write a Dockerfile for a Python or Node app", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Read about image layers and why smaller images build/deploy faster", "Check the image size of one of your Dockerfiles and try to shrink it"] },
-    project: { title: "Project push", tasks: ["Write a Dockerfile for the Notes API, mounting a volume for persistent data", "Confirm the Notes API container survives a restart with data intact"] }
+    project: { title: "Project push", tasks: ["Write a Dockerfile for the Library Reservation & Notes API, mounting a volume for persistent data", "Confirm the Library Reservation & Notes API container survives a restart with data intact"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 11", weekInMonth: 3,
     skill: { title: "Skill sprint", tasks: ["Learn Docker volumes and why they matter for persistent data", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn `.dockerignore` and why it matters for build speed", "Add a `.dockerignore` file to one of your projects"] },
-    project: { title: "Project push", tasks: ["Write a Dockerfile for the Authentication System with environment variables passed in", "Test the containerized auth system end to end"] }
+    project: { title: "Project push", tasks: ["Write a Dockerfile for the Hostel Room & Mess-Card Auth System with environment variables passed in", "Test the containerized auth system end to end"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 11", weekInMonth: 4,
@@ -575,7 +729,7 @@ const WEEK_BLUEPRINTS = [
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 5", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Revise OOP — rebuild the Student Management System's class hierarchy from memory", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Revise OOP — rebuild the Roommate Allocation Engine's class hierarchy from memory", "Solve 6 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Design the combined architecture — React frontend, FastAPI backend, Postgres DB", "Sketch the full request flow from UI click to DB write and back"] },
     project: { title: "Project push", tasks: ["Build the React UI for task boards (columns for todo/in-progress/done)", "Connect the UI to the backend's task CRUD endpoints"] }
   },
@@ -697,12 +851,12 @@ const WEEK_BLUEPRINTS = [
     yearId: 2, yearLabel: "Year 2", monthName: "Month 10", weekInMonth: 1,
     skill: { title: "Skill sprint", tasks: ["Learn multi-container Docker Compose setups (app + DB + reverse proxy)", "Solve 5 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Read how a reverse proxy routes traffic to multiple backend services", "Diagram NGINX sitting in front of your blog's frontend and backend"] },
-    project: { title: "Project push", tasks: ["Write Dockerfiles for the Blog Platform's frontend and backend", "Write a docker-compose.yml wiring frontend, backend and Postgres together"] }
+    project: { title: "Project push", tasks: ["Write Dockerfiles for the Mess-Menu Nutrition Planner Blog's frontend and backend", "Write a docker-compose.yml wiring frontend, backend and Postgres together"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 10", weekInMonth: 2,
     skill: { title: "Skill sprint", tasks: ["Learn environment variable management across services", "Solve 5 DSA problems, mixed review"] },
-    academic: { title: "Academic focus", tasks: ["Learn how secrets/env vars should be handled in CI/CD (not hardcoded)", "Audit your Blog Platform repo for any hardcoded secrets"] },
+    academic: { title: "Academic focus", tasks: ["Learn how secrets/env vars should be handled in CI/CD (not hardcoded)", "Audit your Mess-Menu Nutrition Planner Blog repo for any hardcoded secrets"] },
     project: { title: "Project push", tasks: ["Add NGINX as a reverse proxy in front of the frontend and backend", "Configure NGINX routing rules and test locally"] }
   },
   {
@@ -745,7 +899,7 @@ const WEEK_BLUEPRINTS = [
     yearId: 2, yearLabel: "Year 2", monthName: "Month 12", weekInMonth: 1,
     skill: { title: "Skill sprint", tasks: ["Capstone revision — redo one algorithm each from Divide & Conquer and DP from memory", "Solve 6 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Read a chapter of 'Clean Code' and note 3 practices to adopt", "Refactor one function in an old project using a practice from the chapter"] },
-    project: { title: "Project push", tasks: ["Design the AI Study Assistant — notes storage, search, and PDF upload combined", "Build the notes CRUD backend, reusing patterns from the Notes API"] }
+    project: { title: "Project push", tasks: ["Design the AI Study Assistant for Lab Manuals — notes storage, search, and PDF upload combined", "Build the notes CRUD backend, reusing patterns from the Library Reservation & Notes API"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 12", weekInMonth: 2,
@@ -1343,8 +1497,8 @@ const WEEK_BLUEPRINTS = [
   },
 ];
 
-// Fallback generator — only used if a (year, month, week) combination
-// is missing from WEEK_BLUEPRINTS above, so the app never breaks.
+
+
 function buildCurriculumWeekBlueprints(){
   const weeks = [];
   CURRICULUM.years.forEach(year=>{
@@ -1382,11 +1536,7 @@ function buildCurriculumWeekBlueprints(){
 
 CURRICULUM.weeks = buildCurriculumWeekBlueprints();
 
-/* ============================================================
-   OFFICIAL B.TECH IT SYLLABUS — by semester, per college
-   Each semester ≈ 6 months, 8 semesters across 4 years (aligned
-   1:1 with the 48-month roadmap above — semesterIndex = floor(monthGlobalIndex/6))
-   ============================================================ */
+
 const SYLLABUS_HITK = [
   { sem:1, year:1, subjects:[
     { name:"Physics-I", topics:["Central Forces","Oscillations and Vibrations","Wave Optics","Polarization","Quantum Mechanics","Schrödinger Equation","Particle in a Box"] },
@@ -1449,9 +1599,7 @@ const SYLLABUS_HITK = [
   ]}
 ];
 
-/* ============================================================
-   JUIT SOLAN — B.TECH CSE/IT SYLLABUS — by semester
-   ============================================================ */
+
 const SYLLABUS_JUIT = [
   { sem:1, year:1, subjects:[
     { name:"Mathematics-1", topics:["Matrices, Rank & Inverse","Eigenvalues & Eigenvectors","Differential Equations","Infinite Series","Multiple Integration","Vector Calculus"] },
@@ -1526,18 +1674,74 @@ const SYLLABUS_JUIT = [
   ]}
 ];
 
-/* ============================================================
-   COLLEGE REGISTRY — active syllabus switching
-   ============================================================ */
+
 const COLLEGES = {
-  hitk: { key:"hitk", label:"HITK IT", short:"HITK IT", syllabus: SYLLABUS_HITK },
-  juit: { key:"juit", label:"JUIT CSE", short:"JUIT CSE", syllabus: SYLLABUS_JUIT }
+  hitk: {
+    id: "hitk",
+    collegeName: "Heritage Institute of Technology, Kolkata",
+    shortName: "HITK",
+    branch: "Information Technology",
+    degree: "B.Tech",
+    university: "MAKAUT",
+    syllabus: SYLLABUS_HITK
+  },
+  juit: {
+    id: "juit",
+    collegeName: "Jaypee University of Information Technology, Solan",
+    shortName: "JUIT",
+    branch: "Computer Science & Engineering",
+    degree: "B.Tech",
+    university: "JUIT (Autonomous)",
+    syllabus: SYLLABUS_JUIT
+  }
 };
 
-let SYLLABUS = SYLLABUS_HITK;
+
+
+
+
+function collegeShortLabel(college){
+  if(!college) return "";
+  const words = (college.branch || "").trim().split(/\s+/).filter(Boolean);
+  const branchAbbrev = words.length > 1 ? words.map(w=>w[0]).join("").toUpperCase() : (words[0] || "");
+  return branchAbbrev ? `${college.shortName} · ${branchAbbrev}` : college.shortName;
+}
+
+
+function collegeFullLabel(college){
+  if(!college) return "";
+  const degreeBranch = [college.degree, college.branch].filter(Boolean).join(", ");
+  return [college.collegeName, degreeBranch].filter(Boolean).join(" — ");
+}
+
+
+
+
+function validateSyllabus(collegeId, syllabus){
+  const problems = [];
+  if(!Array.isArray(syllabus) || !syllabus.length){ problems.push("syllabus must be a non-empty array"); return problems; }
+  syllabus.forEach((entry, i)=>{
+    if(typeof entry.sem !== "number") problems.push(`entry ${i}: missing numeric "sem"`);
+    if(typeof entry.year !== "number") problems.push(`entry ${i}: missing numeric "year"`);
+    if(!Array.isArray(entry.subjects) || !entry.subjects.length) problems.push(`entry ${i} (sem ${entry.sem}): "subjects" must be a non-empty array`);
+    else entry.subjects.forEach((subj, j)=>{
+      if(!subj.name) problems.push(`entry ${i} (sem ${entry.sem}), subject ${j}: missing "name"`);
+      if(subj.topics && !Array.isArray(subj.topics)) problems.push(`entry ${i} (sem ${entry.sem}), subject "${subj.name}": "topics" must be an array`);
+    });
+  });
+  if(problems.length) console.warn(`[Trajectory] Syllabus validation issues for "${collegeId}":`, problems);
+  return problems;
+}
+Object.keys(COLLEGES).forEach(id => validateSyllabus(id, COLLEGES[id].syllabus));
+
+
+
+const DEFAULT_COLLEGE_ID = Object.keys(COLLEGES)[0];
+
+let SYLLABUS = COLLEGES[DEFAULT_COLLEGE_ID].syllabus;
 
 function setActiveCollege(key){
-  const college = COLLEGES[key] || COLLEGES.hitk;
+  const college = COLLEGES[key] || COLLEGES[DEFAULT_COLLEGE_ID];
   SYLLABUS = college.syllabus;
   window.SYLLABUS = SYLLABUS;
   return college;
@@ -1555,9 +1759,12 @@ const REVISION_CYCLE = [
 
 window.DEFAULT_DB = DEFAULT_DB;
 window.CURRICULUM = CURRICULUM;
+window.TRACKS = TRACKS;
+window.QUIZ = QUIZ;
 window.SYLLABUS = SYLLABUS;
-window.SYLLABUS_HITK = SYLLABUS_HITK;
-window.SYLLABUS_JUIT = SYLLABUS_JUIT;
 window.COLLEGES = COLLEGES;
+window.DEFAULT_COLLEGE_ID = DEFAULT_COLLEGE_ID;
 window.setActiveCollege = setActiveCollege;
+window.collegeShortLabel = collegeShortLabel;
+window.collegeFullLabel = collegeFullLabel;
 window.REVISION_CYCLE = REVISION_CYCLE;

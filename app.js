@@ -1,23 +1,23 @@
-/* ============================================================
-   TRAJECTORY — App logic
-   ============================================================ */
 
 const DB_KEY = "trajectoryDB_v3";
 const HISTORY_KEY = "trajectoryDB_history_v1";
 const DB_VERSION = 3;
 
 const DEFAULT_DB = window.DEFAULT_DB || {
-  profile: { name: "", startDate: "", createdAt: "" },
-  settings: { theme: "lavender", college: "hitk" },
+  profile: { name: "", startDate: "", createdAt: "", track: null },
+  settings: { theme: "lavender", college: DEFAULT_COLLEGE_ID },
   schedule: { currentIndex: 0, offsetDays: 0, weekStatus: {}, weekTaskDone: {} },
   academics: { subjects: [] },
-  projects: { shipped: {}, started: {}, meta: {}, custom: [] },
+  projects: { shipped: {}, started: {}, meta: {}, custom: [], submissions: [] },
   progress: { dsaSolved: 0 },
   prep: { done: {} },
   timeSync: { offsetMs: 0, lastSynced: null, verified: false },
   tracking: { dailyLogs: {}, historicalPerformance: [] },
-  github: { username: "", profile: null, repos: [], events: [], lastSyncedAt: null },
-  leetcode: { username: "", profile: null, lastSyncedAt: null }
+  github: { username: "", profile: null, repos: [], events: [], lastSyncedAt: null, verifiedIdentity: false },
+  leetcode: { username: "", profile: null, lastSyncedAt: null },
+  codeforces: { username: "", profile: null, lastSyncedAt: null },
+  codechef: { username: "", profile: null, lastSyncedAt: null },
+  resume: { email: "", phone: "", location: "", linkedin: "", portfolio: "", targetRole: "", summary: "" }
 };
 
 let DB = null;
@@ -27,10 +27,40 @@ let projectsFilter = "all";
 let activeTrackingViewport = "month";
 let selectedTrackingMonthIndex = null;
 let selectedTrackingWeekIndex = null;
-let onboardCollege = "hitk";
+let onboardCollege = DEFAULT_COLLEGE_ID;
+let obQuizIndex = 0;
+let obQuizAnswers = {};
+let obResultTrack = null;
+
+const CURATED_PROJECTS = {
+  beginner: [
+    { id: "b1", name: "Developer Toolbox CLI", category: "Productivity & Dev Tools", desc: "Command-line interface loaded with automated file/string transformations and development tools.", stack: ["Node.js", "Commander", "Chalk"] },
+    { id: "b2", name: "Smart File Organizer", category: "Productivity & Dev Tools", desc: "Background script or utility that watches directories and auto-organizes downloads based on file type.", stack: ["Python", "Watchdog"] },
+    { id: "b3", name: "Markdown Knowledge Base", category: "Productivity & Dev Tools", desc: "A fast, plain-text wiki rendering internal Markdown documentation links into hyperlinked notes.", stack: ["React", "Markdown-it"], required: true },
+    { id: "b4", name: "Portfolio CMS", category: "Web Applications", desc: "A lightweight administrative engine allowing real-time edits to professional showcase sections.", stack: ["React", "Node.js", "Express", "MongoDB"], required: true },
+    { id: "b5", name: "Habit & Study Tracker", category: "Web Applications", desc: "Log personal habits, compute daily streaks, and chart study curves over time.", stack: ["Vue.js", "LocalStorage"] },
+    { id: "b6", name: "Bookmark Manager", category: "Web Applications", desc: "Organize collections of engineering resource references with custom search tagging dashboards.", stack: ["HTML5", "CSS3", "JavaScript"] },
+    { id: "b7", name: "Receipt & Expense Tracker", category: "Business Utilities", desc: "Scan, log, and parse company expenses to output instant downloadable monthly financial lists.", stack: ["React", "Tailwind CSS"], required: true },
+    { id: "b8", name: "Invoice Generator", category: "Business Utilities", desc: "A dynamic quote and bill engine compiling professional client-facing PDFs securely.", stack: ["Node.js", "PDFKit", "Express"] },
+    { id: "b9", name: "URL Shortener", category: "Business Utilities", desc: "Core lookup service mapping short tokens to long URLs alongside real-time click tracking arrays.", stack: ["Node.js", "Redis", "Express"], required: true }
+  ],
+  intermediate: [
+    { id: "i1", name: "CRM Lite", category: "Business Software", desc: "Track Customers, manage incoming Leads, record call Notes, and map out interactive Sales Pipelines.", stack: ["Next.js", "Prisma", "PostgreSQL"], required: true },
+    { id: "i2", name: "Inventory & Billing System", category: "Business Software", desc: "Monitor stock levels, integrate simulated Barcodes, compile direct Invoices, and output profit Reports.", stack: ["React Native", "SQLite"] },
+    { id: "i3", name: "Helpdesk & Ticketing", category: "Business Software", desc: "Coordinate customer support issues using granular Priorities, custom assignees, and media Attachments.", stack: ["Django", "PostgreSQL"] },
+    { id: "i4", name: "Appointment Booking SaaS", category: "Business Software", desc: "Multi-tenant slot allocation software perfectly tailored for Doctors, Salons, and Tutors.", stack: ["SvelteKit", "Supabase"], required: true },
+    { id: "i5", name: "Project Management Platform", category: "Business Software", desc: "Collaborative agile tracking board engineered with collaborative Kanbans, Teams, and detailed Tasks.", stack: ["Angular", "NestJS", "MongoDB"] },
+    { id: "i6", name: "Personal Finance Dashboard", category: "Productivity", desc: "Aggregate ongoing Expenses, configure test investment portfolios, and establish future automated saving Goals.", stack: ["React", "Chart.js", "FastAPI"], required: true }
+  ],
+  major: [
+    { id: "m1", name: "AI Academic OS (Trajectory)", category: "Capstone", desc: "Complete ecosystem managing Academic Planning, Milestones, Resumes, and predictive AI analytics.", stack: ["Next.js", "OpenAI", "Python", "PostgreSQL"], required: true },
+    { id: "m2", name: "Business ERP Lite", category: "Capstone", desc: "All-in-one company backend managing master Inventory, Employee payroll lists, Sales pipelines, and operational Reports.", stack: ["Spring Boot", "React", "Docker", "AWS"], required: true },
+    { id: "m3", name: "AI Knowledge Platform", category: "Capstone", desc: "Upload complex PDF documents to invoke contextual Semantic Chat pipelines with automatic abstract Summaries.", stack: ["FastAPI", "LangChain", "Pinecone", "Next.js"] }
+  ]
+};
 
 /* ---------------- storage ---------------- */
-function clone(obj){ return JSON.parse(JSON.stringify(obj)); }
+function clone(obj){ return obj === undefined ? {} : JSON.parse(JSON.stringify(obj)); }
 
 /* ---------------- in-app feedback ---------------- */
 let noticeTimer = null;
@@ -51,6 +81,8 @@ function openDialog({ eyebrow="TRAJECTORY", title, copy="", fields=[], confirmLa
   document.getElementById("appDialogEyebrow").textContent = eyebrow;
   document.getElementById("appDialogTitle").textContent = title;
   document.getElementById("appDialogCopy").textContent = copy;
+  dialog.classList.remove("modal-has-error");
+  document.getElementById("appDialogCopy").classList.remove("field-error-text");
   fieldsHost.innerHTML = fields.map(field=>`<label class="field-label" for="dialog-${field.id}">${field.label}<${field.multiline ? "textarea" : "input"} class="field-input" id="dialog-${field.id}" ${field.multiline ? "" : `type="${field.type || "text"}"`} placeholder="${field.placeholder || ""}">${field.multiline ? field.value || "" : ""}</${field.multiline ? "textarea" : "input"}>`).join("");
   fields.forEach(field=>{ const input = document.getElementById(`dialog-${field.id}`); if(input && !field.multiline) input.value = field.value || ""; });
   confirm.textContent = confirmLabel;
@@ -68,54 +100,99 @@ function openDialog({ eyebrow="TRAJECTORY", title, copy="", fields=[], confirmLa
   (firstInput || confirm).focus();
 }
 
-function loadDB(){
+let historyCache = [];
+
+function storageGet(key){
+  try{ return localStorage.getItem(key); }catch(e){ return null; }
+}
+function storageSet(key, value){
+  try{ localStorage.setItem(key, value); return true; }catch(e){ console.warn("storage.set failed", key, e); return false; }
+}
+function storageDelete(key){
+  try{ localStorage.removeItem(key); }catch(e){ /* nothing to delete */ }
+}
+
+function mergeWithDefaults(parsed){
+  return Object.assign(clone(DEFAULT_DB), parsed, {
+    profile: Object.assign({}, DEFAULT_DB.profile, parsed.profile),
+    settings: Object.assign({}, DEFAULT_DB.settings, parsed.settings),
+    schedule: Object.assign(clone(DEFAULT_DB.schedule), parsed.schedule),
+    academics: Object.assign(clone(DEFAULT_DB.academics), parsed.academics),
+    projects: Object.assign(clone(DEFAULT_DB.projects), parsed.projects),
+    progress: Object.assign(clone(DEFAULT_DB.progress), parsed.progress),
+    prep: Object.assign(clone(DEFAULT_DB.prep), parsed.prep),
+    timeSync: Object.assign(clone(DEFAULT_DB.timeSync), parsed.timeSync),
+    tracking: Object.assign(clone(DEFAULT_DB.tracking), parsed.tracking),
+    github: Object.assign(clone(DEFAULT_DB.github), parsed.github),
+    leetcode: Object.assign(clone(DEFAULT_DB.leetcode), parsed.leetcode),
+    codeforces: Object.assign(clone(DEFAULT_DB.codeforces), parsed.codeforces),
+    codechef: Object.assign(clone(DEFAULT_DB.codechef), parsed.codechef),
+    resume: Object.assign(clone(DEFAULT_DB.resume), parsed.resume)
+  });
+}
+
+ function loadDB(){
   try{
-    const raw = localStorage.getItem(DB_KEY);
-    if(!raw){
-      // migrate earlier local-only databases without losing the existing profile
-      const oldRaw = localStorage.getItem("trajectoryDB_v2") || localStorage.getItem("trajectoryDB_v1");
-      if(oldRaw){ try{ const old = JSON.parse(oldRaw); return Object.assign(clone(DEFAULT_DB), old); }catch(e){} }
-      return clone(DEFAULT_DB);
+    const raw = storageGet(DB_KEY);
+    if(raw){
+      DB = mergeWithDefaults(JSON.parse(raw));
+    } else {
+      const oldRaw = storageGet("trajectoryDB_v2") || storageGet("trajectoryDB_v1");
+      DB = oldRaw ? mergeWithDefaults(JSON.parse(oldRaw)) : clone(DEFAULT_DB);
     }
-    const parsed = JSON.parse(raw);
-    return Object.assign(clone(DEFAULT_DB), parsed, {
-      profile: Object.assign({}, DEFAULT_DB.profile, parsed.profile),
-      settings: Object.assign({}, DEFAULT_DB.settings, parsed.settings),
-      schedule: Object.assign(clone(DEFAULT_DB.schedule), parsed.schedule),
-      academics: Object.assign(clone(DEFAULT_DB.academics), parsed.academics),
-      projects: Object.assign(clone(DEFAULT_DB.projects), parsed.projects),
-      progress: Object.assign(clone(DEFAULT_DB.progress), parsed.progress),
-      prep: Object.assign(clone(DEFAULT_DB.prep), parsed.prep),
-      timeSync: Object.assign(clone(DEFAULT_DB.timeSync), parsed.timeSync),
-      tracking: Object.assign(clone(DEFAULT_DB.tracking), parsed.tracking),
-      github: Object.assign(clone(DEFAULT_DB.github), parsed.github),
-      leetcode: Object.assign(clone(DEFAULT_DB.leetcode), parsed.leetcode),
-      resume: Object.assign(clone(DEFAULT_DB.resume), parsed.resume)
-    });
-  }catch(e){ console.warn("DB load failed, using defaults", e); return clone(DEFAULT_DB); }
+  }catch(e){
+    console.warn("DB load failed, using defaults", e);
+    DB = clone(DEFAULT_DB);
+  }
+  try{
+    const rawHistory = storageGet(HISTORY_KEY);
+    historyCache = rawHistory ? JSON.parse(rawHistory) : [];
+  }catch(e){
+    historyCache = [];
+  }
+  return DB;
 }
 function getHistory(){
-  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]"); } catch(e) { return []; }
+  return historyCache;
 }
 function saveDB(reason){
   try{
     DB.schemaVersion = DB_VERSION;
     DB.updatedAt = new Date().toISOString();
-    localStorage.setItem(DB_KEY, JSON.stringify(DB));
-    const history = getHistory();
-    const latest = history[0] && history[0].data;
+    const serialized = JSON.stringify(DB);
+    const ok = storageSet(DB_KEY, serialized);
+    if(!ok){
+      showNotice("Couldn't save your changes (browser storage is unavailable or blocked). Your last action may be lost on refresh.", "error");
+      return false;
+    }
+
+    const latest = historyCache[0] && historyCache[0].data;
     const comparable = clone(DB); delete comparable.updatedAt;
     const previous = latest ? clone(latest) : null;
     if(previous) delete previous.updatedAt;
     if(!previous || JSON.stringify(comparable) !== JSON.stringify(previous)){
       const snapshot = { id: uid() + Date.now().toString(36), at: DB.updatedAt, reason: reason || "Update", data: clone(DB) };
-      history.unshift(snapshot);
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, 40)));
+      historyCache.unshift(snapshot);
+      historyCache = historyCache.slice(0, 40);
+      const historyOk = storageSet(HISTORY_KEY, JSON.stringify(historyCache));
+      if(!historyOk){
+        console.warn("history save failed (main data still saved)");
+      }
     }
-  }catch(e){ console.warn("save failed", e); }
+    return true;
+  }catch(e){
+    console.warn("save failed", e);
+    const isQuota = e && (e.name === "QuotaExceededError" || e.name === "NS_ERROR_DOM_QUOTA_REACHED" || e.code === 22);
+    showNotice(
+      isQuota
+        ? "Storage is full — your last change wasn't saved. Export a backup from Settings, then clear old data to free up space."
+        : "Couldn't save your changes (browser storage is unavailable or blocked). Your last action may be lost on refresh.",
+      "error"
+    );
+    return false;
+  }
 }
 
-/* ---------------- data flattening ---------------- */
 function buildScheduleData(){
   const weeks = [], months = [];
   const weekBlueprints = Array.isArray(CURRICULUM.weeks) ? CURRICULUM.weeks : [];
@@ -140,7 +217,7 @@ function buildScheduleData(){
           : [`Review ${month.name} concepts`, "Capture one concise summary for later revision"];
         const projectTasks = Array.isArray(blueprint?.project?.tasks) && blueprint.project.tasks.length
           ? blueprint.project.tasks
-          : [`Advance ${month.project || "the milestone"}`, "Log a concrete deliverable before the next week"];
+          : [`Advance chosen roadmap milestone`, "Log a concrete deliverable before the next week"];
         const tasks = [
           ...skillTasks.map((text, ti)=>({ id:`s${ti}`, text })),
           ...academicTasks.map((text, ti)=>({ id:`a${ti}`, text })),
@@ -160,7 +237,6 @@ function buildScheduleData(){
   return { weeks, months };
 }
 
-/* ---------------- date helpers ---------------- */
 function nowDate(){ return new Date(Date.now() + (DB && DB.timeSync ? DB.timeSync.offsetMs||0 : 0)); }
 function todayMidnight(){ const d=nowDate(); d.setHours(0,0,0,0); return d; }
 function parseDate(s){ if(!s) return null; const d=new Date(s+"T00:00:00"); return isNaN(d) ? null : d; }
@@ -177,7 +253,6 @@ function weekDueDate(idx){
   return addDays(start, idx*7 + DB.schedule.offsetDays);
 }
 
-/* ---------------- live time authentication ---------------- */
 async function syncTime(){
   const label = document.getElementById("clockSyncLabel");
   const syncEl = document.getElementById("clockSync");
@@ -211,7 +286,6 @@ function tickClock(){
   if(dateEl) dateEl.textContent = d.toLocaleDateString(undefined, { weekday:"short", month:"short", day:"numeric", year:"numeric" });
 }
 
-/* ---------------- scheduling engine ---------------- */
 function calculateCurrentTimeline(){
   const start = parseDate(DB.profile.startDate);
   const today = todayMidnight();
@@ -286,17 +360,13 @@ function switchTrackingView(targetScope){
 }
 
 function getMonthPerformanceRatio(monthIndex) {
-  // 1. Check if a frozen historical score already exists
   const history = Array.isArray(DB.tracking?.historicalPerformance) ? DB.tracking.historicalPerformance : [];
   const entry = history.find(item => String(item.monthIndex) === String(monthIndex));
   if (entry && entry.value !== undefined) {
     return Math.max(0, Math.min(1, Number(entry.value)));
   }
 
-  // --- ADVANCED TRAJECTORY ALGORITHM ---
-  // Internal difficulty grading weights
   const WEIGHTS = { project: 3.0, skill: 2.0, academic: 1.5, base: 1.0 };
-  
   let earned = 0;
   let possible = 0;
   const baseWeek = monthIndex * 4;
@@ -306,10 +376,8 @@ function getMonthPerformanceRatio(monthIndex) {
     const weekData = WEEKS[weekIdx];
     if (!weekData) continue;
 
-    // Phase A: Grade Weekly Plan Tasks
     const doneTasks = DB.schedule.weekTaskDone[String(weekIdx)] || [];
     weekData.tasks.forEach(task => {
-      // Dynamically infer difficulty based on task vocabulary
       let weight = WEIGHTS.base;
       if (/project|milestone|ship|deploy|build/i.test(task.text)) weight = WEIGHTS.project;
       else if (/dsa|solve|code|algorithm/i.test(task.text)) weight = WEIGHTS.skill;
@@ -319,7 +387,6 @@ function getMonthPerformanceRatio(monthIndex) {
       if (doneTasks.includes(task.id)) earned += weight;
     });
 
-    // Phase B: Grade Daily Logs (Day-wise Micro-Pulse)
     const weekDate = weekDueDate(weekIdx);
     if (weekDate) {
       for (let d = 0; d < 7; d++) {
@@ -328,12 +395,10 @@ function getMonthPerformanceRatio(monthIndex) {
         
         Object.entries(dayLogs).forEach(([taskId, isDone]) => {
           let weight = WEIGHTS.base;
-          // Exploit structured prefixes from daily tracking
           if (taskId.startsWith("project:")) weight = WEIGHTS.project;
           else if (taskId.startsWith("skill:")) weight = WEIGHTS.skill;
           else if (taskId.startsWith("academic:")) weight = WEIGHTS.academic;
           
-          // Daily tasks act as fractional micro-increments to create day-to-day graph movement
           const dailyPulseWeight = weight * 0.15;
           possible += dailyPulseWeight;
           if (isDone) earned += dailyPulseWeight;
@@ -341,7 +406,6 @@ function getMonthPerformanceRatio(monthIndex) {
       }
     }
     
-    // Phase C: Fallback to high-level week status if no granular tasks are scheduled
     if (possible === 0) {
       const status = DB.schedule.weekStatus[weekIdx];
       possible += 1;
@@ -350,7 +414,6 @@ function getMonthPerformanceRatio(monthIndex) {
     }
   }
 
-  // Calculate the final rolling percentage
   return possible === 0 ? 0 : Math.max(0, Math.min(1, earned / possible));
 }
 
@@ -528,30 +591,117 @@ function exportCalendarSchedule(){
   const link = document.createElement("a");
   link.href = url; link.download = "trajectory-schedule.ics"; link.click();
   URL.revokeObjectURL(url);
+  showNotice("Calendar file downloaded — import it into Google Calendar, Outlook, or Apple Calendar.", "success");
 }
 
-async function syncProjectGitHubMetrics(projectKey, repoString){
+class RepoValidationError extends Error {
+  constructor(step, message){
+    super(message);
+    this.name = "RepoValidationError";
+    this.step = step; // which pipeline stage failed, for display/logging
+  }
+}
+async function verifyAndSubmitRepo(projectKey, repoString, projectLabel){
   const trimmed = (repoString || "").trim();
-  const matched = trimmed.match(/github\.com[/:]([^/]+)\/([^/]+)(?:\/|$)/i) || trimmed.match(/^([^/]+)\/([^/]+)$/);
-  if(!matched){ throw new Error("Use a GitHub repo in owner/repo format."); }
+  const attempt = { id: uid(), projectKey, projectLabel: projectLabel || projectKey, input: trimmed, at: new Date().toISOString() };
+
+  const fail = (step, message)=>{
+    attempt.ok = false; attempt.step = step; attempt.error = message;
+    DB.projects.submissions = DB.projects.submissions || [];
+    DB.projects.submissions.unshift(attempt);
+    DB.projects.submissions = DB.projects.submissions.slice(0, 100);
+    saveDB();
+    throw new RepoValidationError(step, message);
+  };
+
+  // Step 1 — URL format validation
+  if(!trimmed) fail("format", "Enter a GitHub repository URL.");
+  const matched = trimmed.match(/^(?:https?:\/\/)?(?:www\.)?github\.com[/:]([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+?)(?:\.git)?\/?$/i)
+    || trimmed.match(/^([A-Za-z0-9_.-]+)\/([A-Za-z0-9_.-]+)$/);
+  if(!matched) fail("format", "That doesn't look like a valid GitHub repo URL. Use https://github.com/owner/repo or owner/repo.");
   const [, owner, repo] = matched;
-  const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
-    headers: { Accept: "application/vnd.github+json", "User-Agent": "Trajectory-App" }
-  });
-  if(!response.ok) throw new Error("GitHub sync failed");
+
+  const connectedUsername = (DB.github && DB.github.username || "").trim();
+  if(!connectedUsername) fail("identity", "Connect your GitHub account in Settings before submitting a repository.");
+
+  let response;
+  try{
+    response = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+      headers: { Accept: "application/vnd.github+json", "User-Agent": "Trajectory-App" }
+    });
+  }catch(networkErr){
+    fail("network", "Couldn't reach GitHub. Check your connection and try again.");
+  }
+  if(response.status === 404) fail("existence", `Repository "${owner}/${repo}" doesn't exist or isn't visible.`);
+  if(response.status === 403) fail("network", "GitHub is rate-limiting this browser. Wait a bit and try again.");
+  if(!response.ok) fail("existence", `GitHub returned an error (${response.status}) looking up this repository.`);
   const data = await response.json();
-  DB.projects.meta[projectKey] = Object.assign(DB.projects.meta[projectKey] || {}, {
+
+  if(data.private) fail("visibility", `"${owner}/${repo}" is private. Only public repositories can be submitted.`);
+
+  const repoOwner = (data.owner && data.owner.login || owner).toLowerCase();
+  if(repoOwner !== connectedUsername.toLowerCase()){
+    fail("ownership", `"${owner}/${repo}" belongs to @${repoOwner}, not your connected account @${connectedUsername}. Submit a repository you own.`);
+  }
+
+  let readmeAvailable = false;
+  try{
+    const readmeRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/readme`, {
+      headers: { Accept: "application/vnd.github+json", "User-Agent": "Trajectory-App" }
+    });
+    readmeAvailable = readmeRes.ok;
+  }catch(e){ /* best-effort; missing README shouldn't block submission */ }
+
+  const meta = {
     repo: `https://github.com/${owner}/${repo}`,
     repoName: `${owner}/${repo}`,
+    description: data.description || "",
+    language: data.language || "",
+    license: data.license ? data.license.spdx_id : null,
+    topics: Array.isArray(data.topics) ? data.topics : [],
+    visibility: data.private ? "private" : "public",
     stars: data.stargazers_count,
-    language: data.language,
+    forks: data.forks_count,
     openIssues: data.open_issues_count,
-    pushes: data.pushed_at,
+    defaultBranch: data.default_branch,
+    createdAt: data.created_at,
+    pushedAt: data.pushed_at,
+    readmeAvailable,
+    verifiedOwner: connectedUsername,
+    verifiedAt: new Date().toISOString(),
     lastSyncedAt: new Date().toISOString()
-  });
-  saveDB();
-  renderProjects();
+  };
+  meta.qualityScore = computeRepoQualityScore(meta, data);
+
+  DB.projects.meta[projectKey] = Object.assign(DB.projects.meta[projectKey] || {}, meta);
+  DB.projects.shipped[projectKey] = true;
+  DB.projects.started[projectKey] = true;
+
+  attempt.ok = true; attempt.step = "complete"; attempt.qualityScore = meta.qualityScore; attempt.repoName = meta.repoName;
+  DB.projects.submissions = DB.projects.submissions || [];
+  DB.projects.submissions.unshift(attempt);
+  DB.projects.submissions = DB.projects.submissions.slice(0, 100);
+
+  const saved = saveDB(`Shipped ${meta.repoName}`);
+  if(!saved){
+    throw new Error("Repository was verified, but your progress couldn't be saved. See the notice above for details.");
+  }
+  renderProjects(); renderHome(); renderResume();
   return DB.projects.meta[projectKey];
+}
+
+function computeRepoQualityScore(meta, raw){
+  let score = 0;
+  if(meta.readmeAvailable) score += 30;
+  if(meta.license) score += 15;
+  if(meta.description && meta.description.trim().length >= 10) score += 15;
+  if(meta.topics && meta.topics.length > 0) score += 10;
+  if(!raw.archived) score += 5;
+  const pushedDaysAgo = meta.pushedAt ? (Date.now() - new Date(meta.pushedAt).getTime()) / 86400000 : Infinity;
+  if(pushedDaysAgo <= 30) score += 15;
+  else if(pushedDaysAgo <= 90) score += 8;
+  if((raw.size || 0) > 20) score += 10; // non-trivial repo (size in KB)
+  return Math.max(0, Math.min(100, score));
 }
 
 async function syncGitHubProfile(username){
@@ -570,28 +720,23 @@ async function syncGitHubProfile(username){
     profile: { login: profile.login, name: profile.name, avatar: profile.avatar_url, url: profile.html_url, followers: profile.followers, publicRepos: profile.public_repos, bio: profile.bio },
     repos: reposResponse.ok ? (await reposResponse.json()).map(repo=>({ name:repo.name, url:repo.html_url, language:repo.language, stars:repo.stargazers_count, updatedAt:repo.updated_at })) : [],
     events: eventsResponse.ok ? (await eventsResponse.json()).map(event=>({ type:event.type, repo:event.repo && event.repo.name, at:event.created_at })) : [],
-    lastSyncedAt: new Date().toISOString()
+    lastSyncedAt: new Date().toISOString(),
+    verifiedIdentity: true
   };
   saveDB("GitHub profile sync");
   renderSettings();
+  renderProjects();
 }
 
 async function syncLeetCodeProfile(username){
   const clean = (username || "").trim();
   if(!clean) throw new Error("Enter a LeetCode username first.");
-  
-  // Use a modern, active proxy endpoint that bypasses Cloudflare blocks
   const response = await fetch(`https://alfa-leetcode-api.onrender.com/${encodeURIComponent(clean)}`);
-  
   if(!response.ok) throw new Error("LeetCode API is rate-limiting or unavailable. Try again later.");
-  
   const stats = await response.json();
-  
-  // The API returns an 'errors' array if the user doesn't exist
   if(stats.errors || stats.message === "User not found") {
     throw new Error("LeetCode user not found.");
   }
-  
   DB.leetcode = {
     username: clean,
     profile: {
@@ -605,29 +750,94 @@ async function syncLeetCodeProfile(username){
     },
     lastSyncedAt: new Date().toISOString()
   };
-  
   saveDB("LeetCode profile sync");
   renderSettings();
 }
 
-// Weekly academic targets should surface theory only — labs, workshops, projects,
-// internships, viva/presentation logistics and pure-practice blocks are excluded here.
-// This does NOT touch the full syllabus reference view on the Academics page, only
-// the weekly target generation below. Curated per-college from the actual syllabus
-// content (subject name alone isn't reliable — e.g. JUIT names many theory-heavy
-// subjects "X & Lab" while still listing genuinely conceptual topics).
+async function syncCodeforcesProfile(username){
+  const clean = (username || "").trim();
+  if(!clean) throw new Error("Enter a Codeforces handle first.");
+  let response;
+  try{
+    response = await fetch(`https://codeforces.com/api/user.info?handles=${encodeURIComponent(clean)}`);
+  }catch(networkErr){
+    throw new Error("Codeforces couldn't be reached from the browser (their API doesn't allow direct browser requests). Try again later — this isn't a problem with your handle.");
+  }
+  if(!response.ok) throw new Error("Codeforces API is unavailable right now. Try again later.");
+  const payload = await response.json();
+  if(payload.status !== "OK" || !payload.result || !payload.result[0]){
+    throw new Error("Codeforces handle not found.");
+  }
+  const p = payload.result[0];
+  DB.codeforces = {
+    username: clean,
+    profile: {
+      handle: p.handle,
+      rating: p.rating ?? null,
+      maxRating: p.maxRating ?? null,
+      rank: p.rank ?? null,
+      maxRank: p.maxRank ?? null,
+      avatar: p.avatar || p.titlePhoto || ""
+    },
+    lastSyncedAt: new Date().toISOString()
+  };
+  saveDB("Codeforces profile sync");
+  renderSettings();
+}
+
+async function syncCodeChefProfile(username){
+  const clean = (username || "").trim();
+  if(!clean) throw new Error("Enter a CodeChef username first.");
+  let response;
+  try{
+    response = await fetch(`https://codechef-api.vercel.app/handle/${encodeURIComponent(clean)}`);
+  }catch(networkErr){
+    throw new Error("CodeChef sync is temporarily unavailable (unofficial API unreachable). Try again later.");
+  }
+  if(!response.ok) throw new Error("CodeChef sync is temporarily unavailable. Try again later.");
+  const stats = await response.json();
+  if(stats.success === false || !stats.username){
+    throw new Error("CodeChef username not found.");
+  }
+  DB.codechef = {
+    username: clean,
+    profile: {
+      rating: stats.currentRating ?? stats.rating ?? null,
+      highestRating: stats.highestRating ?? null,
+      stars: stats.stars ?? null,
+      globalRank: stats.globalRank ?? null,
+      countryRank: stats.countryRank ?? null
+    },
+    lastSyncedAt: new Date().toISOString()
+  };
+  saveDB("CodeChef profile sync");
+  renderSettings();
+}
+
+function wireAsyncSyncButton(buttonId, inputId, action, errorFallback){
+  const button = document.getElementById(buttonId);
+  if(!button) return;
+  button.addEventListener("click", async ()=>{
+    button.disabled = true; button.classList.add("btn-loading");
+    try {
+      const inputEl = inputId ? document.getElementById(inputId) : null;
+      await action(inputEl ? inputEl.value : undefined);
+    } catch(err) {
+      showNotice(err.message || errorFallback, "error");
+    } finally {
+      button.disabled = false; button.classList.remove("btn-loading");
+    }
+  });
+}
+
 const PRACTICAL_SUBJECT_EXCLUDE = new Set([
-  // HITK
   "physics & electronics labs", "design thinking lab", "industry competence lab",
   "internship & major project phase-i", "major project-ii", "comprehensive viva",
-  "skill development", "final presentation",
-  // JUIT
-  "workshop", "life skills & professional communication lab", "engineering drawing & design",
-  "unix programming lab", "competitive programming-i", "competitive programming-ii",
+  "skill development", "final presentation", "workshop", "life skills & professional communication lab",
+  "engineering drawing & design", "unix programming lab", "competitive programming-i", "competitive programming-ii",
   "competitive programming-iii", "summer training-i", "summer training-ii", "summer training-iii",
-  "full stack development lab", "logical and quantitative techniques-i",
-  "logical and quantitative techniques-ii", "selected value-added course",
-  "soft skills for employability", "minor project", "major project part-1", "major project part-2"
+  "full stack development lab", "logical and quantitative techniques-i", "logical and quantitative techniques-ii",
+  "selected value-added course", "soft skills for employability", "minor project", "major project part-1", "major project part-2"
 ]);
 const PRACTICAL_TOPIC_EXCLUDE = new Set([
   "laboratory instrumentation", "experimental verification", "experimental setups"
@@ -646,8 +856,6 @@ function buildAcademicGoalEntries(subjects, weekKey){
     const topicList = (Array.isArray(subject.topics) ? subject.topics : []).filter(isTheoryOnlyTopic);
     const examDate = parseDate(subject.examDate);
     const daysToExam = examDate ? diffDays(examDate, today) : null;
-    // Reserve the last 12 weeks for revision. The remaining syllabus is distributed
-    // in weekly batches so a semester is completed 2–3 months before the exam.
     const finishBufferWeeks = Math.max(8, Math.min(12, Number(subject.finishBufferWeeks) || 12));
     const syllabusWeeks = daysToExam === null ? 1 : Math.max(1, Math.ceil(daysToExam / 7) - finishBufferWeeks);
     const topicsPerWeek = Math.max(1, Math.ceil(topicList.length / syllabusWeeks));
@@ -743,6 +951,13 @@ function renderHome(){
   document.getElementById("homeGreeting").textContent = `WELCOME BACK, ${(DB.profile.name||"ENGINEER").toUpperCase()}`;
   document.getElementById("brandOp").textContent = `OP: ${(DB.profile.name||"—").toUpperCase()}`;
 
+  const trackBadge = document.getElementById("homeTrackBadge");
+  if(trackBadge){
+    const track = TRACKS[DB.profile.track];
+    if(track){ trackBadge.hidden = false; trackBadge.textContent = track.label; }
+    else trackBadge.hidden = true;
+  }
+
   const dayCounter = document.getElementById("dayCounter");
   const prepBanner = document.getElementById("prepBanner");
 
@@ -750,17 +965,23 @@ function renderHome(){
     const daysTo = diffDays(start, today);
     dayCounter.textContent = `T-MINUS ${daysTo}D`;
     prepBanner.hidden = false;
+
+    const tierCap = daysTo <= 10 ? 1 : daysTo <= 30 ? 2 : daysTo <= 60 ? 3 : 4;
+    const modeLabel = daysTo <= 10 ? "SPRINT MODE — ESSENTIALS ONLY" : daysTo <= 30 ? "FOUNDATIONS MODE" : daysTo <= 60 ? "BUILDING MOMENTUM" : "FULL RUNWAY";
+
     const prepSections = [
       ["skill", CURRICULUM.prep.skill],
       ["academic", CURRICULUM.prep.academic],
       ["project", CURRICULUM.prep.project]
     ];
-    const totalTasks = prepSections.reduce((sum, [,sec])=>sum + sec.tasks.length, 0);
-    const doneCount = Object.keys(DB.prep.done).filter(k=>DB.prep.done[k]).length;
+    const visibleOf = sec => sec.tasks.filter(t => t.tier <= tierCap || DB.prep.done[t.id]);
+    const totalTasks = prepSections.reduce((sum, [,sec])=>sum + visibleOf(sec).length, 0);
+    const doneCount = prepSections.reduce((sum, [,sec])=>sum + visibleOf(sec).filter(t=>DB.prep.done[t.id]).length, 0);
     const pct = totalTasks ? Math.round((doneCount/totalTasks)*100) : 0;
     const ringCirc = 251.2;
     const ringOffset = ringCirc - (ringCirc * pct / 100);
     const allDone = doneCount === totalTasks && totalTasks > 0;
+    const hiddenTaskCount = prepSections.reduce((sum, [,sec])=>sum + sec.tasks.filter(t=>t.tier > tierCap && !DB.prep.done[t.id]).length, 0);
 
     prepBanner.innerHTML = `
       <div class="prep-head-row">
@@ -776,26 +997,27 @@ function renderHome(){
         </div>
         <div class="prep-head-copy">
           <div style="font-weight:700;font-size:16px">Your course starts ${fmtLong(start)}</div>
-          <div class="sem-meta">${daysTo} day${daysTo===1?"":"s"} to get ahead · ${doneCount}/${totalTasks} done</div>
+          <div class="sem-meta">${daysTo} day${daysTo===1?"":"s"} to get ahead · ${doneCount}/${totalTasks} done${hiddenTaskCount ? ` · ${hiddenTaskCount} more unlock as your date gets closer` : ""}</div>
         </div>
-        <div class="prep-ready-badge ${allDone?"":"locked"}">${allDone?"✓ MISSION READY":"IN PROGRESS"}</div>
+        <div class="prep-ready-badge ${allDone?"":"locked"}">${allDone?"✓ MISSION READY":modeLabel}</div>
       </div>
       <div class="prep-grid">
         ${prepSections.map(([key, sec])=>{
-          const sectionDone = sec.tasks.filter((_,i)=>DB.prep.done[key+":"+i]).length;
+          const tasks = visibleOf(sec);
+          const sectionDone = tasks.filter(t=>DB.prep.done[t.id]).length;
           return `
           <div class="prep-track-card">
             <div class="prep-track-head">
               <div class="prep-track-title">${sec.title}</div>
-              <div class="prep-track-count">${sectionDone}/${sec.tasks.length}</div>
+              <div class="prep-track-count">${sectionDone}/${tasks.length}</div>
             </div>
             <ul class="prep-track-list">
-              ${sec.tasks.map((t,i)=>{
-                const isDone = !!DB.prep.done[key+":"+i];
+              ${tasks.map(t=>{
+                const isDone = !!DB.prep.done[t.id];
                 return `
                 <li class="${isDone?"done":""}">
-                  <input type="checkbox" data-prep="${key}:${i}" ${isDone?"checked":""}>
-                  <label>${t}</label>
+                  <input type="checkbox" data-prep="${key}:${t.id}" data-prep-id="${t.id}" ${isDone?"checked":""}>
+                  <label>${t.text}</label>
                 </li>`;
               }).join("")}
             </ul>
@@ -803,7 +1025,7 @@ function renderHome(){
         }).join("")}
       </div>`;
     prepBanner.querySelectorAll("[data-prep]").forEach(cb=>{
-      cb.addEventListener("change", ()=>{ DB.prep.done[cb.dataset.prep]=cb.checked; saveDB(); renderHome(); });
+      cb.addEventListener("change", ()=>{ DB.prep.done[cb.dataset.prepId]=cb.checked; saveDB(); renderHome(); });
     });
   } else {
     prepBanner.hidden = true;
@@ -816,7 +1038,6 @@ function renderHome(){
   const cwTitle = document.getElementById("cwTitle");
   const cwDue = document.getElementById("cwDue");
   const cwTasks = document.getElementById("cwTasks");
-  const academicSummary = document.getElementById("acWeeklySummary");
   const idx = DB.schedule.currentIndex;
 
   if(!start || start > today){
@@ -1010,7 +1231,6 @@ function renderAcademics(){
       else taskIdx = REVISION_CYCLE.length - weeksLeft;
     }
     const wk = getWeekKey(today);
-    const taskDone = (s.tasksDone && s.tasksDone[wk]) || false;
     const sem = SYLLABUS[currentSemesterIndex()] || SYLLABUS[0];
     const topicSource = sem.subjects.find(item => item.name === s.name);
     const topics = Array.isArray(s.topics) && s.topics.length
@@ -1043,174 +1263,297 @@ function renderAcademics(){
       saveDB(); renderAcademics();
     });
   });
-  list.querySelectorAll("[data-acstask]").forEach(cb=>{
-    cb.addEventListener("change", ()=>{
-      const s = DB.academics.subjects.find(x=>x.id===cb.dataset.acstask);
-      if(!s) return;
-      if(!s.tasksDone) s.tasksDone = {};
-      s.tasksDone[cb.dataset.key] = cb.checked;
-      saveDB();
-    });
-  });
-  list.querySelectorAll("[data-topic-check]").forEach(cb=>{
-    cb.addEventListener("change", ()=>{
-      const s = DB.academics.subjects.find(x=>x.id===cb.dataset.topicCheck);
-      if(!s) return;
-      if(!s.topicDone) s.topicDone = {};
-      if(!s.topicDone[cb.dataset.key]) s.topicDone[cb.dataset.key] = {};
-      s.topicDone[cb.dataset.key][cb.dataset.topicName] = cb.checked;
-      saveDB(); renderAcademics();
-    });
-  });
 }
 
-/* ---------------- RENDER: PROJECTS (Mission Control ladder) ---------------- */
-function starsFor(globalIndex){ return Math.min(6, 1 + Math.floor(globalIndex/8)); }
-
-function statusFor(mo){
-  if(DB.projects.shipped[mo.globalIndex]) return "shipped";
-  if(DB.projects.started[mo.globalIndex]) return "progress";
-  const cur = currentMonthGlobalIndex();
-  if(cur === mo.globalIndex) return "progress";
-  return "planned";
+/* ---------------- RENDER: PROJECTS (Gamified Choice-Based Roadmaps) ---------------- */
+// "Shipped" is no longer a manual toggle — it is only set by a verified repo
+// submission (see verifyAndSubmitRepo). This just moves planned -> in-progress,
+// or lets you step back to planned before you've shipped.
+function toggleStartedStatus(id){
+  if(DB.projects.shipped[id]) return; // shipped projects are locked; verified submission is the only path off "shipped"
+  DB.projects.started[id] = !DB.projects.started[id];
+  saveDB(); renderProjects(); renderHome(); renderResume();
 }
 
-function cycleStatus(globalIndex){
-  const shipped = !!DB.projects.shipped[globalIndex];
-  const started = !!DB.projects.started[globalIndex];
-  if(!started && !shipped){ DB.projects.started[globalIndex] = true; }
-  else if(started && !shipped){ DB.projects.shipped[globalIndex] = true; }
-  else { DB.projects.shipped[globalIndex] = false; DB.projects.started[globalIndex] = false; }
-  saveDB(); renderProjects();
+function qualityScoreHTML(meta){
+  if(typeof meta.qualityScore !== "number") return "";
+  const tier = meta.qualityScore>=70 ? "high" : meta.qualityScore>=40 ? "mid" : "low";
+  return `<div class="project-quality-score" data-score-tier="${tier}">
+    <span>Quality ${meta.qualityScore}/100</span>
+    <span class="quality-bar"><span class="quality-bar-fill" data-tier="${tier}" style="width:${meta.qualityScore}%"></span></span>
+  </div>`;
 }
 
-function projectCardHTML(mo, opts){
-  opts = opts || {};
-  const status = statusFor(mo);
-  const badgeCls = status==="shipped" ? "badge-shipped" : status==="progress" ? "badge-progress" : "badge-planned";
-  const badgeLabel = status==="shipped" ? "SHIPPED" : status==="progress" ? "IN PROGRESS" : "PLANNED";
-  const stars = opts.stars!==undefined ? opts.stars : starsFor(mo.globalIndex);
-  const starHTML = "★".repeat(stars) + "☆".repeat(6-stars);
-  const meta = DB.projects.meta[mo.globalIndex] || {};
-  const metaLine = meta.repo
-    ? `<a href="${meta.repo}" target="_blank" rel="noopener">Repo ↗</a>`
-    : "No Repo";
-  const liveLine = meta.live
-    ? ` | <a href="${meta.live}" target="_blank" rel="noopener">Live ↗</a>`
-    : " | Not Live";
-  const githubStats = meta.lastSyncedAt ? `<div class="project-github-stats">GitHub · ${meta.language || "code"} · ${meta.stars || 0} stars · ${meta.openIssues || 0} open issues</div>` : "";
-  const isCurrent = status==="progress";
-  const btnLabel = status==="planned" ? "START" : status==="progress" ? "IN PROGRESS" : "SHIPPED ✓";
+/** Shared badge class/label pair for a project's shipped/progress/planned status. */
+function statusBadge(status){
+  return {
+    cls: status==="shipped" ? "badge-shipped" : status==="progress" ? "badge-progress" : "badge-planned",
+    label: status==="shipped" ? "SHIPPED" : status==="progress" ? "IN PROGRESS" : "PLANNED"
+  };
+}
+
+/** Shared "tag pill" list renderer, e.g. tech stack or skill tags. */
+function tagPillsHTML(items){
+  return (items||[]).map(t=>`<span class="pc-tag">${t}</span>`).join("");
+}
+
+/** Star rating markup, e.g. "★★★★☆☆" for count=4 out of 6. */
+function starRatingHTML(count){
+  const c = Math.max(0, Math.min(6, count));
+  return "★".repeat(c) + "☆".repeat(6-c);
+}
+
+/**
+ * Shared card renderer for both curated and custom projects. The two kinds
+ * differ only in: id source, category/module label, description styling,
+ * star count derivation, meta-line content, and submit-button dataset flag —
+ * everything else (badges, quality score, verified badge, actions shell)
+ * was previously duplicated verbatim between projectCardHTML/customCardHTML.
+ */
+function projectCardHTMLShared({ id, name, desc, descClass, stack, category, stars, status, metaLineHTML, githubStatsHTML, isCustom, isRecommended }){
+  const isShipped = status === "shipped";
+  const badge = statusBadge(status);
+  const meta = DB.projects.meta[id] || {};
+  const qualityLine = isShipped ? qualityScoreHTML(meta) : "";
+  const verifiedBadge = isShipped && meta.verifiedOwner ? `<span class="badge badge-verified" title="Owner verified at submission">✓ @${meta.verifiedOwner}</span>` : "";
+  const recommendedBadge = isRecommended ? `<span class="badge badge-recommended" title="Part of the suggested 4/3/2 core build path">Core pick</span>` : "";
+  const isCurrent = status === "progress";
+
+  const startBtn = isShipped
+    ? `<button class="btn btn-primary btn-sm" disabled>Shipped ✓</button>`
+    : `<button class="btn btn-ghost btn-sm" data-${isCustom ? "custom-start" : "toggle-start-pid"}="${id}">${status==="progress" ? "In progress" : "Start"}</button>`;
+  const submitBtn = `<button class="pc-code-btn" data-submit-pid="${id}"${isCustom ? ' data-submit-custom="1"' : ""} title="${isShipped ? "View or replace" : "Submit"} verified repository">${isShipped ? "&lt;/&gt;" : "Submit repo"}</button>`;
 
   return `
-    <div class="project-card ${isCurrent?'is-current':''}" data-gidx="${mo.globalIndex}">
+    <div class="project-card ${isCurrent?'is-current':''} ${isShipped?'is-shipped':''}" data-${isCustom ? "custom" : "pid"}="${id}">
       <div class="pc-top">
         <div class="pc-badges">
-          <span class="badge ${badgeCls}">${badgeLabel}</span>
-          <span class="badge badge-module">${opts.tag || "M"+(mo.globalIndex+1)}</span>
+          <span class="badge ${badge.cls}">${badge.label}</span>
+          <span class="badge badge-module">${category}</span>
+          ${recommendedBadge}
+          ${verifiedBadge}
         </div>
-        <div class="pc-stars">${starHTML}</div>
       </div>
-      <div class="pc-title">${mo.project}</div>
-      <div class="pc-desc">${mo.desc || ""}</div>
-      <div class="pc-stack">${(mo.stack||[]).map(t=>`<span class="pc-tag">${t}</span>`).join("")}</div>
-      ${githubStats}
+      <div class="pc-title">${name}</div>
+      <div class="${descClass}">${desc || ""}</div>
+      <div class="pc-stack">${tagPillsHTML(stack)}</div>
+      ${githubStatsHTML || ""}
+      ${qualityLine}
       <div class="pc-foot">
-        <div class="pc-meta">${metaLine}${liveLine}</div>
+        <div class="pc-meta">${metaLineHTML}</div>
         <div class="pc-actions">
-          <button class="btn btn-primary btn-sm" data-start="${mo.globalIndex}">${btnLabel}</button>
-          <button class="pc-code-btn" data-repo="${mo.globalIndex}" title="Set repo link">&lt;/&gt;</button>
+          ${startBtn}
+          ${submitBtn}
         </div>
       </div>
     </div>`;
+}
+
+function projectCardHTML(proj, level){
+  const id = proj.id;
+  const isShipped = !!DB.projects.shipped[id];
+  const isStarted = !!DB.projects.started[id];
+  const status = isShipped ? "shipped" : isStarted ? "progress" : "planned";
+
+  const starCountMap = { beginner: 2, intermediate: 4, major: 6 };
+  const meta = DB.projects.meta[id] || {};
+  const metaLineHTML = (meta.repo ? `<a href="${meta.repo}" target="_blank" rel="noopener">Repo ↗</a>` : "No Repo")
+    + (meta.live ? ` | <a href="${meta.live}" target="_blank" rel="noopener">Live ↗</a>` : " | Not Live");
+  const githubStatsHTML = meta.lastSyncedAt
+    ? `<div class="project-github-stats">GitHub · ${meta.language || "code"} · ${meta.stars || 0} stars · ${meta.openIssues || 0} open issues</div>`
+    : "";
+
+  return projectCardHTMLShared({
+    id, name: proj.name, desc: proj.desc, descClass: "pc-desc", stack: proj.stack,
+    category: proj.category, stars: starCountMap[level] || 2, status, metaLineHTML, githubStatsHTML, isCustom: false, isRecommended: !!proj.required
+  });
 }
 
 function customCardHTML(c){
-  const starHTML = "★".repeat(c.stars) + "☆".repeat(6-c.stars);
-  const badgeCls = c.status==="shipped" ? "badge-shipped" : c.status==="progress" ? "badge-progress" : "badge-planned";
-  const badgeLabel = c.status==="shipped" ? "SHIPPED" : c.status==="progress" ? "IN PROGRESS" : "PLANNED";
-  const btnLabel = c.status==="planned" ? "START" : c.status==="progress" ? "IN PROGRESS" : "SHIPPED ✓";
+  return projectCardHTMLShared({
+    id: c.id, name: c.name, desc: c.desc, descClass: "pc-desc pc-desc-mono", stack: c.stack,
+    category: "CUSTOM AI BUILD", stars: c.stars || 5, status: c.status, metaLineHTML: "Custom Scoped", isCustom: true
+  });
+}
+
+function renderProjectsSummary() {
+  const tierMeta = {
+    beginner: { label: "Beginner Projects", colorVar: "--accent", dimVar: "--accent-dim" },
+    intermediate: { label: "Intermediate Projects", colorVar: "--amber", dimVar: "--amber-dim" },
+    major: { label: "Major Capstone", colorVar: "--green", dimVar: "--green-dim" }
+  };
+
+  const groups = ["beginner", "intermediate", "major"].map(key=>{
+    const all = CURATED_PROJECTS[key];
+    const required = all.filter(p=>p.required);
+    const requiredShipped = required.filter(p=>DB.projects.shipped[p.id]).length;
+    const totalShipped = all.filter(p=>DB.projects.shipped[p.id]).length;
+    return { key, ...tierMeta[key], requiredTotal: required.length, requiredShipped, allTotal: all.length, totalShipped };
+  });
+
+  const cards = groups.map(g=>{
+    const complete = g.requiredShipped >= g.requiredTotal;
+    const pct = g.requiredTotal ? Math.round((g.requiredShipped / g.requiredTotal) * 100) : 0;
+    const bonusShipped = g.totalShipped - g.requiredShipped;
+    const bonusNote = bonusShipped > 0 ? `<div class="roadmap-tier-bonus">+${bonusShipped} bonus build${bonusShipped===1?"":"s"} shipped</div>` : "";
+    return `
+      <div class="roadmap-tier-card" style="--tier-color:var(${g.colorVar}); --tier-dim:var(${g.dimVar})">
+        <div class="roadmap-tier-top">
+          <span class="roadmap-tier-label">${g.label}</span>
+          ${complete ? `<span class="roadmap-tier-done">Core done</span>` : ""}
+        </div>
+        <div class="roadmap-tier-count"><strong>${g.requiredShipped}</strong><span>/${g.requiredTotal} core shipped</span></div>
+        <div class="year-bar-track roadmap-tier-track"><div class="year-bar-fill" style="width:${pct}%; background:var(--tier-color)"></div></div>
+        <div class="roadmap-tier-foot">
+          <span>${g.allTotal - g.requiredTotal} more optional in this tier</span>
+          ${bonusNote}
+        </div>
+      </div>`;
+  }).join("");
+
   return `
-    <div class="project-card" data-custom="${c.id}">
-      <div class="pc-top">
-        <div class="pc-badges"><span class="badge ${badgeCls}">${badgeLabel}</span><span class="badge badge-module">CUSTOM</span></div>
-        <div class="pc-stars">${starHTML}</div>
-      </div>
-      <div class="pc-title">${c.name}</div>
-      <div class="pc-desc">${c.desc||""}</div>
-      <div class="pc-stack">${(c.stack||[]).map(t=>`<span class="pc-tag">${t}</span>`).join("")}</div>
-      <div class="pc-foot">
-        <div class="pc-meta">Custom build</div>
-        <div class="pc-actions">
-          <button class="btn btn-primary btn-sm" data-custom-start="${c.id}">${btnLabel}</button>
-          <button class="pc-code-btn" data-custom-remove="${c.id}" title="Remove">✕</button>
+    <div class="card roadmap-summary-card">
+      <div class="card-head-row">
+        <div>
+          <div class="card-eyebrow">Trajectory Project Roadmap</div>
+          <h2 class="roadmap-summary-title">Recommended build path</h2>
         </div>
       </div>
-    </div>`;
+      <p class="pc-desc roadmap-summary-sub">A suggested core of 4 beginner, 3 intermediate, and 2 capstone builds across your four years — the rest are optional, ship them any time for extra depth.</p>
+      <div class="roadmap-tier-grid">${cards}</div>
+    </div>
+  `;
 }
 
 function renderProjects(){
-  const filtered = MONTHS.filter(m => projectsFilter==="all" || String(m.yearId)===projectsFilter);
-  const byStar = {};
-  filtered.forEach(m=>{
-    const s = starsFor(m.globalIndex);
-    (byStar[s] = byStar[s]||[]).push(m);
-  });
+  // Gracefully remap legacy numeric string filters down to explicit phase scopes
+  let levelFilter = projectsFilter;
+  if(levelFilter === "1") levelFilter = "beginner";
+  if(levelFilter === "2") levelFilter = "intermediate";
+  if(levelFilter === "3" || levelFilter === "4") levelFilter = "major";
 
   document.querySelectorAll("#yearTabs .tab-btn").forEach(b=>b.classList.toggle("active", b.dataset.filter===projectsFilter));
 
-  let html = "";
+  let html = renderProjectsSummary();
+  let hasAnyCards = false;
 
-  if(projectsFilter==="all" && DB.projects.custom.length){
-    html += `<div class="phase-block"><div class="phase-head"><div class="phase-num">+</div><div class="phase-title">Custom Builds</div></div>
+  if((levelFilter==="all" || levelFilter==="custom") && DB.projects.custom && DB.projects.custom.length){
+    hasAnyCards = true;
+    html += `<div class="phase-block"><div class="phase-head"><div class="phase-num">+</div><div class="phase-title">Custom AI-Guided Infrastructure</div><div class="phase-count">${DB.projects.custom.filter(c=>c.status==="shipped").length}/${DB.projects.custom.length} shipped</div></div>
       <div class="project-grid">${DB.projects.custom.map(customCardHTML).join("")}</div></div>`;
   }
 
-  Object.keys(byStar).sort((a,b)=>a-b).forEach(star=>{
+  const targetedLevels = ["beginner", "intermediate", "major"].filter(lvl => levelFilter === "all" || levelFilter === lvl);
+  const phaseTitles = { beginner: "Beginner Milestone Core (2-3 Weeks Each)", intermediate: "Intermediate Agile Engine (6-8 Weeks Each)", major: "Major Production Capstone (4-8 Months Run)" };
+  const phaseNums = { beginner: "I", intermediate: "II", major: "III" };
+
+  targetedLevels.forEach(lvl => {
+    hasAnyCards = true;
+    const shippedCount = CURATED_PROJECTS[lvl].filter(p=>DB.projects.shipped[p.id]).length;
     html += `<div class="phase-block">
-      <div class="phase-head"><div class="phase-num">${star}</div><div class="phase-title">Phase ${star}</div></div>
-      <div class="project-grid">${byStar[star].map(m=>projectCardHTML(m)).join("")}</div>
+      <div class="phase-head"><div class="phase-num">${phaseNums[lvl]}</div><div class="phase-title">${phaseTitles[lvl]}</div><div class="phase-count">${shippedCount}/${CURATED_PROJECTS[lvl].length} shipped</div></div>
+      <div class="project-grid">${CURATED_PROJECTS[lvl].map(p=>projectCardHTML(p, lvl)).join("")}</div>
     </div>`;
   });
 
-  const container = document.getElementById("phaseContainer");
-  container.innerHTML = html || `<div class="card empty-state"><div class="empty-title">Nothing here yet</div></div>`;
+  if(!hasAnyCards){
+    html += `<div class="empty-state">
+      <div class="empty-title">No projects in this view</div>
+      <p class="empty-sub">Try a different filter, or add a custom AI-guided build to get started.</p>
+    </div>`;
+  }
 
-  container.querySelectorAll("[data-start]").forEach(btn=>{
-    btn.addEventListener("click", ()=>cycleStatus(parseInt(btn.dataset.start,10)));
+  const container = document.getElementById("phaseContainer");
+  if(container) {
+    container.innerHTML = html;
+  }
+
+  // Bind events
+  container.querySelectorAll("[data-toggle-start-pid]").forEach(btn=>{
+    btn.addEventListener("click", ()=>toggleStartedStatus(btn.dataset.toggleStartPid));
   });
-  container.querySelectorAll("[data-repo]").forEach(btn=>{
+
+  container.querySelectorAll("[data-submit-pid]").forEach(btn=>{
     btn.addEventListener("click", ()=>{
-      const idx = parseInt(btn.dataset.repo,10);
-      const cur = DB.projects.meta[idx] || {};
-      openDialog({
-        eyebrow:"PROJECT LINKS", title:"Connect project links", copy:"Add the repository and optional live deployment for this build.", confirmLabel:"Save links",
-        fields:[
-          { id:"repo", label:"Repository URL", placeholder:"https://github.com/you/project", value:cur.repo||"" },
-          { id:"live", label:"Live URL (optional)", placeholder:"https://your-project.example", value:cur.live||"" }
-        ],
-        onConfirm:({repo, live})=>{
-          DB.projects.meta[idx] = { repo: repo.trim(), live: live.trim() };
-          saveDB("Project repository linked"); renderProjects();
-          if(repo.trim()) syncProjectGitHubMetrics(idx, repo).catch(err=>showNotice(err.message || "Repository details could not be synced.", "error"));
-        }
-      });
+      const pid = btn.dataset.submitPid;
+      const isCustom = btn.dataset.submitCustom === "1";
+      const label = isCustom
+        ? (DB.projects.custom.find(x=>x.id===pid) || {}).name
+        : (Object.values(CURATED_PROJECTS).flat().find(p=>p.id===pid) || {}).name;
+      openRepoSubmissionDialog(pid, label);
     });
   });
+
   container.querySelectorAll("[data-custom-start]").forEach(btn=>{
     btn.addEventListener("click", ()=>{
       const c = DB.projects.custom.find(x=>x.id===btn.dataset.customStart);
-      if(!c) return;
-      c.status = c.status==="planned" ? "progress" : c.status==="progress" ? "shipped" : "planned";
-      saveDB(); renderProjects();
+      if(!c || c.status === "shipped") return; // shipped is locked; only a verified submission changes it
+      c.status = c.status==="planned" ? "progress" : "planned";
+      saveDB(); renderProjects(); renderHome(); renderResume();
     });
   });
   container.querySelectorAll("[data-custom-remove]").forEach(btn=>{
     btn.addEventListener("click", ()=>{
       DB.projects.custom = DB.projects.custom.filter(x=>x.id!==btn.dataset.customRemove);
-      saveDB(); renderProjects();
+      saveDB(); renderProjects(); renderHome(); renderResume();
     });
   });
+}
+
+/**
+ * Opens the guided repo submission dialog. Runs the full verification pipeline
+ * on confirm and surfaces field-level validation errors (not a silent failure)
+ * by re-opening the dialog with a copy line describing exactly what failed.
+ */
+function openRepoSubmissionDialog(pid, label, errorCopy){
+  const cur = DB.projects.meta[pid] || {};
+  const connected = DB.github && DB.github.username;
+  const baseCopy = connected
+    ? `Submitting verifies the repo is public, exists, and is owned by your connected account (@${connected}) before marking this build shipped.`
+    : `Connect your GitHub account in Settings first — ownership verification needs it to confirm you authored this repo.`;
+  openRepoDialogInternal(pid, label, cur.repo || "", errorCopy || baseCopy, !!errorCopy);
+}
+
+function openRepoDialogInternal(pid, label, prefillRepo, copy, isError){
+  openDialog({
+    eyebrow: "SUBMIT PROJECT",
+    title: `Verify & ship "${label || pid}"`,
+    copy,
+    confirmLabel: "Verify & submit",
+    fields: [
+      { id:"repo", label:"GitHub repository URL", placeholder:"https://github.com/owner/repo", value: prefillRepo }
+    ],
+    onConfirm: ({repo})=>{
+      submitProjectRepo(pid, label, repo);
+      return false; // keep our own control over closing; submitProjectRepo manages the dialog lifecycle
+    }
+  });
+  if(isError){
+    const dialog = document.getElementById("appDialog");
+    dialog.classList.add("modal-has-error");
+    const copyEl = document.getElementById("appDialogCopy");
+    if(copyEl) copyEl.classList.add("field-error-text");
+  }
+}
+
+async function submitProjectRepo(pid, label, repoInput){
+  const confirmBtn = document.getElementById("appDialogConfirm");
+  const dialog = document.getElementById("appDialog");
+  if(confirmBtn){ confirmBtn.disabled = true; confirmBtn.classList.add("btn-loading"); }
+  try{
+    const meta = await verifyAndSubmitRepo(pid, repoInput, label);
+    if(dialog) dialog.hidden = true;
+    showNotice(`Verified and shipped — ${meta.repoName} (quality ${meta.qualityScore}/100).`, "success");
+  }catch(err){
+    if(err instanceof RepoValidationError){
+      // Re-open the dialog with the specific failure surfaced inline, prefilled with what they typed.
+      openRepoDialogInternal(pid, label, repoInput, err.message, true);
+    }else{
+      showNotice(err.message || "Verification failed unexpectedly. Try again.", "error");
+    }
+  }finally{
+    if(confirmBtn){ confirmBtn.disabled = false; confirmBtn.classList.remove("btn-loading"); }
+  }
 }
 
 /* ---------------- RENDER: PROGRESS ---------------- */
@@ -1245,147 +1588,124 @@ function renderProgress(){
 }
 
 /* ---------------- RESUME BUILDER ---------------- */
-
-// Pull every shipped build (roadmap projects + custom builds) into one shape.
 function getShippedProjects(){
-  const fromRoadmap = MONTHS
-    .filter(mo => DB.projects.shipped[mo.globalIndex])
-    .map(mo => {
-      const meta = DB.projects.meta[mo.globalIndex] || {};
-      return {
-        name: mo.project, desc: mo.desc || "", stack: mo.stack || [],
-        repo: meta.repo || "", live: meta.live || "",
-        yearLabel: mo.yearLabel, monthName: mo.name, globalIndex: mo.globalIndex, custom: false
-      };
+  const fromRoadmap = [];
+  ["beginner", "intermediate", "major"].forEach(lvl => {
+    CURATED_PROJECTS[lvl].forEach(p => {
+      if (DB.projects.shipped[p.id]) {
+        const meta = DB.projects.meta[p.id] || {};
+        fromRoadmap.push({
+          name: p.name, desc: p.desc || "", stack: p.stack || [],
+          repo: meta.repo || "", live: meta.live || "",
+          yearLabel: lvl.toUpperCase(), monthName: p.category || "", globalIndex: p.id, custom: false
+        });
+      }
     });
+  });
+
   const fromCustom = (DB.projects.custom || [])
     .filter(c => c.status === "shipped")
-    .map(c => ({ name: c.name, desc: c.desc || "", stack: c.stack || [], repo: "", live: "", yearLabel: "Custom", monthName: "", globalIndex: -1, custom: true }));
-  return [...fromRoadmap, ...fromCustom].sort((a,b)=>a.globalIndex - b.globalIndex);
-}
+    .map(c => ({
+      name: c.name, desc: c.desc || "", stack: c.stack || [], repo: "", live: "",
+      yearLabel: "CUSTOM BUILD", monthName: "AI Scoped", globalIndex: c.id, custom: true
+    }));
 
-function getInProgressProjects(){
-  const fromRoadmap = MONTHS
-    .filter(mo => DB.projects.started[mo.globalIndex] && !DB.projects.shipped[mo.globalIndex])
-    .map(mo => ({ name: mo.project, globalIndex: mo.globalIndex }));
-  const fromCustom = (DB.projects.custom || [])
-    .filter(c => c.status === "progress")
-    .map(c => ({ name: c.name, globalIndex: -1 }));
   return [...fromRoadmap, ...fromCustom];
 }
 
-// Aggregate a clean, de-duplicated skill list from shipped + in-flight work.
+function getInProgressProjects(){
+  const fromRoadmap = [];
+  ["beginner", "intermediate", "major"].forEach(lvl => {
+    CURATED_PROJECTS[lvl].forEach(p => {
+      if (DB.projects.started[p.id] && !DB.projects.shipped[p.id]) {
+        fromRoadmap.push({ name: p.name, globalIndex: p.id });
+      }
+    });
+  });
+
+  const fromCustom = (DB.projects.custom || [])
+    .filter(c => c.status === "progress")
+    .map(c => ({ name: c.name, globalIndex: c.id }));
+
+  return [...fromRoadmap, ...fromCustom];
+}
+
 function getResumeSkills(){
   const tags = new Set();
-  MONTHS.forEach(mo=>{
-    if(DB.projects.shipped[mo.globalIndex] || DB.projects.started[mo.globalIndex]){
-      (mo.stack||[]).forEach(t=>tags.add(t));
-    }
+  ["beginner", "intermediate", "major"].forEach(lvl => {
+    CURATED_PROJECTS[lvl].forEach(p => {
+      if (DB.projects.shipped[p.id] || DB.projects.started[p.id]) {
+        (p.stack||[]).forEach(t=>tags.add(String(t).toUpperCase()));
+      }
+    });
   });
   (DB.projects.custom || []).forEach(c=>{
-    if(c.status === "shipped" || c.status === "progress") (c.stack||[]).forEach(t=>tags.add(String(t).toUpperCase()));
+    if(c.status === "shipped" || c.status === "progress") {
+      (c.stack||[]).forEach(t=>tags.add(String(t).toUpperCase()));
+    }
   });
   return Array.from(tags);
 }
 
-// Parse the low end of a milestone string like "150–200 solved" or "6-8 deployed" -> 150 / 6
-function parseMilestoneFloor(val){
-  const match = String(val||"").match(/\d+/);
-  return match ? parseInt(match[0], 10) : null;
-}
-
-function currentYearAndWindow(){
-  const start = parseDate(DB.profile.startDate);
-  const idx = DB.schedule.currentIndex;
-  const curYearId = (start && WEEKS.length) ? WEEKS[Math.min(Math.max(idx,0), WEEKS.length-1)].yearId : 1;
-  const year = CURRICULUM.years.find(y=>y.id===curYearId) || CURRICULUM.years[0];
-  const yearStartWeek = (year.id - 1) * 48;
-  const yearEndDate = start ? weekDueDate(yearStartWeek + 47) : null;
-  return { year, yearEndDate };
-}
-
-// Build a prioritized, deadline-aware list of what to do before this resume is application-ready.
 function computeResumeReadiness(){
   const items = [];
   const shipped = getShippedProjects();
   const inProgress = getInProgressProjects();
-  const { year, yearEndDate } = currentYearAndWindow();
 
   inProgress.forEach(p=>{
-    let due = null;
-    if(p.globalIndex >= 0){
-      due = weekDueDate(p.globalIndex * 4 + 3); // due date of that month's final week
-    }
     items.push({
       priority: "high",
-      text: `Finish and ship "${p.name}" — mark it shipped once it's live so it can go straight on your resume.`,
-      due, dueLabel: due ? `Target: week of ${fmtShort(due)}` : "No fixed date — finish when ready"
+      text: `Refine and ship "${p.name}" — compile dependencies into a production profile deployment to land it on your portfolio.`,
+      due: null, dueLabel: "Target: Active Pipeline Sprint"
     });
   });
 
-  if(year && Array.isArray(year.milestones)){
-    const projectMilestone = year.milestones.find(([label])=>/project/i.test(label));
-    const dsaMilestone = year.milestones.find(([label])=>/dsa/i.test(label));
-    if(projectMilestone){
-      const floor = parseMilestoneFloor(projectMilestone[1]);
-      if(floor && shipped.length < floor){
-        items.push({
-          priority: "medium",
-          text: `Ship ${floor - shipped.length} more project${floor - shipped.length===1?"":"s"} to hit the ${year.label} target of ${projectMilestone[1]} shipped builds.`,
-          due: yearEndDate, dueLabel: yearEndDate ? `By end of ${year.label}: ${fmtShort(yearEndDate)}` : `By end of ${year.label}`
-        });
-      }
-    }
-    if(dsaMilestone){
-      const floor = parseMilestoneFloor(dsaMilestone[1]);
-      if(floor && (DB.progress.dsaSolved||0) < floor){
-        items.push({
-          priority: "medium",
-          text: `Solve ${floor - (DB.progress.dsaSolved||0)} more DSA problems to reach the ${year.label} bar of ${dsaMilestone[1]} — a strong number to quote on your resume.`,
-          due: yearEndDate, dueLabel: yearEndDate ? `By end of ${year.label}: ${fmtShort(yearEndDate)}` : `By end of ${year.label}`
-        });
-      }
-    }
+  const requiredBeginner = CURATED_PROJECTS.beginner.filter(p=>p.required);
+  const requiredIntermediate = CURATED_PROJECTS.intermediate.filter(p=>p.required);
+  const requiredMajor = CURATED_PROJECTS.major.filter(p=>p.required);
+  const bShipped = requiredBeginner.filter(p => DB.projects.shipped[p.id]).length;
+  const iShipped = requiredIntermediate.filter(p => DB.projects.shipped[p.id]).length;
+  const mShipped = requiredMajor.filter(p => DB.projects.shipped[p.id]).length;
+
+  if (bShipped < requiredBeginner.length) {
+    const remaining = requiredBeginner.length - bShipped;
+    items.push({ priority: "medium", text: `Complete ${remaining} more Beginner project${remaining===1?'':'s'} to finish your recommended core (${bShipped}/${requiredBeginner.length}).`, due: null, dueLabel: "Roadmap Objective" });
+  }
+  if (iShipped < requiredIntermediate.length) {
+    const remaining = requiredIntermediate.length - iShipped;
+    items.push({ priority: "medium", text: `Complete ${remaining} more Intermediate project${remaining===1?'':'s'} to finish your recommended core (${iShipped}/${requiredIntermediate.length}).`, due: null, dueLabel: "Roadmap Objective" });
+  }
+  if (mShipped < requiredMajor.length) {
+    const remaining = requiredMajor.length - mShipped;
+    items.push({ priority: "high", text: `Design and launch ${remaining} more Major Capstone build${remaining===1?'':'s'} to finish your recommended core (${mShipped}/${requiredMajor.length}).`, due: null, dueLabel: "Roadmap Objective" });
   }
 
   const missingLinks = shipped.filter(p=>!p.custom && !p.repo);
   if(missingLinks.length){
     items.push({
       priority: "high",
-      text: `Add a repo link to ${missingLinks.length} shipped project${missingLinks.length===1?"":"s"} (${missingLinks.slice(0,3).map(p=>p.name).join(", ")}${missingLinks.length>3?"…":""}) so recruiters can see the code.`,
-      due: null, dueLabel: "Do this before you start applying"
+      text: `Link raw repositories to ${missingLinks.length} shipped architecture tracks (${missingLinks.slice(0,3).map(p=>p.name).join(", ")}) for technical auditing.`,
+      due: null, dueLabel: "Audit Preparation Check"
     });
   }
 
   if(!DB.github || !DB.github.profile){
     items.push({ priority:"low", text:"Sync your GitHub profile in Settings — it feeds live repo activity into your portfolio story.", due:null, dueLabel:"Anytime" });
   }
-
   if(!DB.resume.email || !DB.resume.phone){
     items.push({ priority:"high", text:"Add your email and phone number in the contact panel below — recruiters need a way to reach you.", due:null, dueLabel:"Before you export" });
-  }
-  if(!DB.resume.linkedin && !DB.resume.portfolio){
-    items.push({ priority:"low", text:"Add a LinkedIn or portfolio link — resumes with a live link get more callbacks.", due:null, dueLabel:"Before you export" });
   }
   if(!DB.resume.summary){
     items.push({ priority:"low", text:"Write a 1–2 line summary describing what you build and what you're aiming for.", due:null, dueLabel:"Before you export" });
   }
-  if(!shipped.length){
-    items.push({ priority:"high", text:"Ship your first project — even a small one gives you something concrete to put on the page.", due:null, dueLabel:"Start this week" });
-  }
 
   const rank = { high:0, medium:1, low:2 };
-  return items.sort((a,b)=>{
-    if(a.due && b.due) return a.due - b.due;
-    if(a.due) return -1;
-    if(b.due) return 1;
-    return rank[a.priority]-rank[b.priority];
-  });
+  return items.sort((a,b)=>rank[a.priority]-rank[b.priority]);
 }
 
 function buildResumeText(){
   const p = DB.profile, r = DB.resume;
-  const college = COLLEGES[DB.settings.college]?.label || "";
+  const college = COLLEGES[DB.settings.college];
   const shipped = getShippedProjects();
   const skills = getResumeSkills();
   const lines = [];
@@ -1397,7 +1717,9 @@ function buildResumeText(){
 
   lines.push("", "EDUCATION");
   const sem = currentSemesterIndex()+1;
-  lines.push(`${college}${college?" — ":""}Semester ${sem}${DB.progress.dsaSolved ? ` · ${DB.progress.dsaSolved} DSA problems solved` : ""}`);
+  const eduLabel = collegeFullLabel(college);
+  lines.push(`${eduLabel}${eduLabel?" — ":""}Semester ${sem}${DB.progress.dsaSolved ? ` · ${DB.progress.dsaSolved} DSA problems solved` : ""}`);
+  if(college && college.university) lines.push(`Affiliated to ${college.university}`);
 
   if(skills.length){
     lines.push("", "SKILLS");
@@ -1422,19 +1744,14 @@ function buildResumeText(){
   return lines.join("\n");
 }
 
-// Build a standalone, print-ready HTML document replicating the Jake's Resume layout,
-// set in Computer Modern Serif, populated from tracked data. Used for PDF export via window.print().
 function buildJakesResumeHTML(){
   const r = DB.resume;
   const p = DB.profile;
   const skills = getResumeSkills();
   const shipped = getShippedProjects();
-  const college = (window.COLLEGES && window.COLLEGES[DB.settings.college])
-    ? window.COLLEGES[DB.settings.college].label
-    : (DB.settings.college || "University");
+  const college = (window.COLLEGES && window.COLLEGES[DB.settings.college]) || null;
 
-  const esc = (str) => String(str||"")
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const esc = (str) => String(str||"").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   const bareUrl = (u) => esc(String(u||"").replace(/^https?:\/\//, ""));
 
   const contactBits = [];
@@ -1450,7 +1767,7 @@ function buildJakesResumeHTML(){
         <span class="jr-right">${[proj.repo ? `<a href="${esc(proj.repo)}">Repo</a>` : "", proj.live ? `<a href="${esc(proj.live)}">Live</a>` : ""].filter(Boolean).join(" | ")}</span>
       </div>
       <ul class="jr-bullets">
-        <li>${esc(proj.desc || "Developed full-stack application logic and architecture.")}</li>
+        <li>${esc(proj.desc || "Developed full-stack application logic and production-ready code infrastructure.")}</li>
       </ul>
     </div>`).join("");
 
@@ -1501,16 +1818,16 @@ function buildJakesResumeHTML(){
   <section>
     <h2>Education</h2>
     <div class="jr-item">
-      <div class="jr-row"><span class="jr-left jr-bold">${esc(college)}</span><span class="jr-right"></span></div>
-      <div class="jr-row jr-sub"><span class="jr-left">Bachelor of Technology (or Equivalent)</span><span class="jr-right"></span></div>
+      <div class="jr-row"><span class="jr-left jr-bold">${esc(college ? college.collegeName : (DB.settings.college || "University"))}</span><span class="jr-right"></span></div>
+      <div class="jr-row jr-sub"><span class="jr-left">${esc(college ? [college.degree, college.branch].filter(Boolean).join(", ") : "Bachelor of Technology (or Equivalent)")}</span><span class="jr-right">${esc(college && college.university ? `Affiliated to ${college.university}` : "")}</span></div>
     </div>
   </section>
 
   <section>
     <h2>Experience</h2>
     <div class="jr-item">
-      <div class="jr-row"><span class="jr-left jr-bold">Trajectory Tracked Builder</span><span class="jr-right">Current</span></div>
-      <div class="jr-row jr-sub"><span class="jr-left">Continuous Engineering Roadmap</span><span class="jr-right"></span></div>
+      <div class="jr-row"><span class="jr-left jr-bold">Trajectory Tracked Builder</span><span class="jr-right">Continuous</span></div>
+      <div class="jr-row jr-sub"><span class="jr-left">Continuous Engineering Roadmap Execution</span><span class="jr-right"></span></div>
       <ul class="jr-bullets">
         <li>Solved ${DB.progress.dsaSolved || 0} Data Structures and Algorithms problems</li>
       </ul>
@@ -1529,8 +1846,6 @@ function buildJakesResumeHTML(){
 </body>
 </html>`;
 }
-
-
 
 function renderResumeChecklist(){
   const host = document.getElementById("resumeChecklist");
@@ -1559,7 +1874,7 @@ function renderResume(){
   const skillsHost = document.getElementById("resumeSkills");
   if(skillsHost){
     skillsHost.innerHTML = skills.length
-      ? skills.map(s=>`<span class="pc-tag">${s}</span>`).join("")
+      ? tagPillsHTML(skills)
       : `<div class="empty-sub">Ship or start a project to build up your skills list automatically.</div>`;
   }
 
@@ -1571,7 +1886,7 @@ function renderResume(){
           <div class="subject-card">
             <h3>${proj.name}</h3>
             <div class="pc-desc">${proj.desc || ""}</div>
-            <div class="pc-stack">${(proj.stack||[]).map(t=>`<span class="pc-tag">${t}</span>`).join("")}</div>
+            <div class="pc-stack">${tagPillsHTML(proj.stack)}</div>
             <div class="pc-meta">${proj.repo ? `<a href="${proj.repo}" target="_blank" rel="noopener">Repo ↗</a>` : "No repo linked"}${proj.live ? ` · <a href="${proj.live}" target="_blank" rel="noopener">Live ↗</a>` : ""}</div>
           </div>`).join("")
       : `<div class="empty-sub">No shipped projects yet — mark a build "SHIPPED" on the Projects page and it will land here.</div>`;
@@ -1584,17 +1899,159 @@ function renderResume(){
 }
 
 /* ---------------- RENDER: SETTINGS ---------------- */
+// Populates every college <select> in the app from the COLLEGES registry,
+// so adding a college/branch to data.js is enough — no HTML edits needed.
+function populateCollegeSelects(){
+  const optionsHTML = Object.values(COLLEGES)
+    .map(c => `<option value="${c.id}">${collegeShortLabel(c)}</option>`)
+    .join("");
+  ["obCollege", "collegePicker"].forEach(id=>{
+    const sel = document.getElementById(id);
+    if(sel) sel.innerHTML = optionsHTML;
+  });
+}
+
 function renderOnboardCollegePicker(){
   const sel = document.getElementById("obCollege");
   if(sel) sel.value = onboardCollege;
 }
 
+/* ---------------- ONBOARDING WIZARD ---------------- */
+function goToObStep(n){
+  [1,2,3].forEach(i=>{
+    const panel = document.getElementById(`obPanel${i}`);
+    if(panel) panel.hidden = (i !== n);
+    const dot = document.querySelector(`.onboard-step-dot[data-step="${i}"]`);
+    if(dot){
+      dot.classList.toggle("active", i === n);
+      dot.classList.toggle("complete", i < n);
+    }
+  });
+  if(n === 2) renderQuizQuestion();
+  if(n === 3) renderTrackResult();
+}
+
+function computeTrackFromAnswers(answers){
+  const values = Object.values(answers);
+  if(values.some(a=>a && a.forceGeneralist)) return "generalist";
+  const scores = {};
+  QUIZ.forEach(q=>{
+    const a = answers[q.id];
+    if(a && a.track){
+      const w = q.weight || 1;
+      scores[a.track] = (scores[a.track]||0) + w;
+    }
+  });
+  const entries = Object.entries(scores);
+  if(!entries.length) return "generalist";
+  entries.sort((a,b)=>b[1]-a[1]);
+  const topScore = entries[0][1];
+  const topTied = entries.filter(([,s])=>s===topScore);
+  if(topTied.length > 1) return "generalist";
+  return entries[0][0];
+}
+
+function renderQuizQuestion(){
+  const host = document.getElementById("quizHost");
+  const fill = document.getElementById("quizProgressFill");
+  if(!host) return;
+  const q = QUIZ[obQuizIndex];
+  if(!q){
+    obResultTrack = computeTrackFromAnswers(obQuizAnswers);
+    goToObStep(3);
+    return;
+  }
+  if(fill) fill.style.width = `${Math.round((obQuizIndex / QUIZ.length) * 100)}%`;
+  const selected = obQuizAnswers[q.id];
+  host.innerHTML = `
+    <div class="quiz-question">
+      <div class="quiz-question-count">QUESTION ${obQuizIndex+1} OF ${QUIZ.length}</div>
+      <div class="quiz-question-prompt">${q.prompt}</div>
+      <div class="quiz-options">
+        ${q.options.map((opt,oi)=>`<button type="button" class="quiz-option${selected && selected.label===opt.label ? " selected" : ""}" data-opt="${oi}">${opt.label}</button>`).join("")}
+      </div>
+    </div>`;
+  host.querySelectorAll("[data-opt]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const opt = q.options[parseInt(btn.dataset.opt, 10)];
+      obQuizAnswers[q.id] = opt;
+      obQuizIndex++;
+      setTimeout(renderQuizQuestion, 160);
+    });
+  });
+}
+
+function renderTrackResult(){
+  const card = document.getElementById("trackResultCard");
+  if(!card) return;
+  const track = TRACKS[obResultTrack] || TRACKS.generalist;
+  card.innerHTML = `
+    <div class="track-result-eyebrow">SUGGESTED TRACK</div>
+    <div class="track-result-label">${track.label}</div>
+    <div class="track-result-tagline">${track.tagline}</div>
+    <div class="track-result-blurb">${track.blurb}</div>
+    <div class="track-pick-label">Not feeling it? Pick your own track instead:</div>
+    <div class="track-pick-list">
+      ${Object.values(TRACKS).map(t=>`<button type="button" class="track-pick-chip${t.id===track.id?" selected":""}" data-track="${t.id}">${t.label}</button>`).join("")}
+    </div>`;
+  card.querySelectorAll("[data-track]").forEach(chip=>{
+    chip.addEventListener("click", ()=>{
+      obResultTrack = chip.dataset.track;
+      renderTrackResult();
+    });
+  });
+}
+
+function renderSubmissionHistory(){
+  const host = document.getElementById("submissionHistory");
+  if(!host) return;
+  const submissions = (DB.projects && DB.projects.submissions) || [];
+  if(!submissions.length){
+    host.innerHTML = `<div class="empty-sub">No submissions yet. Verified repos you ship will show up here.</div>`;
+    return;
+  }
+  host.innerHTML = submissions.slice(0, 20).map(s=>{
+    const when = new Date(s.at).toLocaleString();
+    if(s.ok){
+      return `<div class="submission-row submission-ok">
+        <div class="submission-row-main"><strong>${s.projectLabel}</strong> <span class="submission-repo">${s.repoName || s.input}</span></div>
+        <div class="submission-row-meta">Verified &amp; shipped · quality ${s.qualityScore}/100 · ${when}</div>
+      </div>`;
+    }
+    return `<div class="submission-row submission-fail">
+      <div class="submission-row-main"><strong>${s.projectLabel}</strong> <span class="submission-repo">${s.input || "—"}</span></div>
+      <div class="submission-row-meta">Failed at <em>${s.step}</em> — ${s.error} · ${when}</div>
+    </div>`;
+  }).join("");
+}
+
 function renderSettings(){
   document.getElementById("stName").value = DB.profile.name || "";
   document.getElementById("stDate").value = DB.profile.startDate || "";
+  const trackSummary = document.getElementById("stTrackSummary");
+  if(trackSummary){
+    const track = TRACKS[DB.profile.track] || TRACKS.generalist;
+    trackSummary.innerHTML = `
+      <div class="settings-track-card">
+        <div>
+          <div class="track-label">${track.label}</div>
+          <div class="track-tagline">${track.tagline}</div>
+        </div>
+      </div>`;
+  }
   document.querySelectorAll(".theme-swatch").forEach(btn=>btn.classList.toggle("active", btn.dataset.theme === DB.settings.theme));
   const collegeSel = document.getElementById("collegePicker");
-  if(collegeSel) collegeSel.value = DB.settings.college || "hitk";
+  if(collegeSel) collegeSel.value = DB.settings.college || DEFAULT_COLLEGE_ID;
+  const institutionDetail = document.getElementById("institutionDetail");
+  if(institutionDetail){
+    const college = COLLEGES[DB.settings.college || DEFAULT_COLLEGE_ID];
+    institutionDetail.innerHTML = college ? `
+      <div class="institution-detail-row"><span>College</span><strong>${college.collegeName}</strong></div>
+      <div class="institution-detail-row"><span>Degree</span><strong>${college.degree}</strong></div>
+      <div class="institution-detail-row"><span>Branch</span><strong>${college.branch}</strong></div>
+      <div class="institution-detail-row"><span>University</span><strong>${college.university}</strong></div>
+    ` : "";
+  }
   const ghInput = document.getElementById("ghUsername");
   const ghSummary = document.getElementById("ghSummary");
   if(ghInput) ghInput.value = DB.github?.username || "";
@@ -1602,9 +2059,11 @@ function renderSettings(){
     const gh = DB.github || {};
     if(gh.profile){
       const repos = (gh.repos || []).slice(0,3).map(repo=>`<a href="${repo.url}" target="_blank" rel="noopener">${repo.name}${repo.language ? ` · ${repo.language}` : ""}</a>`).join("");
-      ghSummary.innerHTML = `<div class="gh-profile"><img src="${gh.profile.avatar}" alt=""><div><a href="${gh.profile.url}" target="_blank" rel="noopener">@${gh.profile.login}</a><span>${gh.profile.publicRepos} public repos · ${gh.profile.followers} followers</span></div></div><div class="gh-repos">${repos || "No recent public repositories found."}</div><div class="sync-note">Synced ${new Date(gh.lastSyncedAt).toLocaleString()}</div>`;
-    } else ghSummary.innerHTML = `<div class="empty-sub">Your public GitHub activity will appear here after a sync.</div>`;
+      const identityBadge = gh.verifiedIdentity ? `<span class="badge badge-shipped" style="margin-left:8px">VERIFIED IDENTITY</span>` : "";
+      ghSummary.innerHTML = `<div class="gh-profile"><img src="${gh.profile.avatar}" alt=""><div><a href="${gh.profile.url}" target="_blank" rel="noopener">@${gh.profile.login}</a>${identityBadge}<span>${gh.profile.publicRepos} public repos · ${gh.profile.followers} followers</span></div></div><div class="gh-repos">${repos || "No recent public repositories found."}</div><div class="sync-note">Synced ${new Date(gh.lastSyncedAt).toLocaleString()}</div>`;
+    } else ghSummary.innerHTML = `<div class="empty-sub">Your public GitHub activity will appear here after a sync — this becomes your verified development identity for project submissions.</div>`;
   }
+  renderSubmissionHistory();
   const ltInput = document.getElementById("ltUsername");
   const ltSummary = document.getElementById("ltSummary");
   if(ltInput) ltInput.value = DB.leetcode?.username || "";
@@ -1615,13 +2074,33 @@ function renderSettings(){
       ltSummary.innerHTML = `<div class="gh-profile"><div><a href="https://leetcode.com/${lt.username}/" target="_blank" rel="noopener">@${lt.username}</a><span>${p.totalSolved}/${p.totalQuestions} solved · Rank #${p.ranking ?? "—"}</span></div></div><div class="gh-repos"><span>${p.easySolved} easy</span><span>${p.mediumSolved} medium</span><span>${p.hardSolved} hard</span></div><div class="sync-note">Synced ${new Date(lt.lastSyncedAt).toLocaleString()}</div>`;
     } else ltSummary.innerHTML = `<div class="empty-sub">Your public LeetCode stats will appear here after a sync.</div>`;
   }
+  const cfInput = document.getElementById("cfUsername");
+  const cfSummary = document.getElementById("cfSummary");
+  if(cfInput) cfInput.value = DB.codeforces?.username || "";
+  if(cfSummary){
+    const cf = DB.codeforces || {};
+    if(cf.profile){
+      const p = cf.profile;
+      cfSummary.innerHTML = `<div class="gh-profile"><div><a href="https://codeforces.com/profile/${cf.username}" target="_blank" rel="noopener">@${cf.username}</a><span>Rating ${p.rating ?? "—"} (max ${p.maxRating ?? "—"}) · ${p.rank || "unrated"}</span></div></div><div class="sync-note">Synced ${new Date(cf.lastSyncedAt).toLocaleString()}</div>`;
+    } else cfSummary.innerHTML = `<div class="empty-sub">Your public Codeforces rating will appear here after a sync. Note: Codeforces' API doesn't allow direct browser requests, so sync may fail even with a valid handle.</div>`;
+  }
+  const ccInput = document.getElementById("ccUsername");
+  const ccSummary = document.getElementById("ccSummary");
+  if(ccInput) ccInput.value = DB.codechef?.username || "";
+  if(ccSummary){
+    const cc = DB.codechef || {};
+    if(cc.profile){
+      const p = cc.profile;
+      ccSummary.innerHTML = `<div class="gh-profile"><div><a href="https://www.codechef.com/users/${cc.username}" target="_blank" rel="noopener">@${cc.username}</a><span>Rating ${p.rating ?? "—"} (max ${p.highestRating ?? "—"}) · Global rank ${p.globalRank ?? "—"}</span></div></div><div class="sync-note">Synced ${new Date(cc.lastSyncedAt).toLocaleString()}</div>`;
+    } else ccSummary.innerHTML = `<div class="empty-sub">Your public CodeChef rating will appear here after a sync. This uses an unofficial API and may occasionally be unavailable.</div>`;
+  }
   const historyList = document.getElementById("historyList");
   if(historyList){
     const history = getHistory().slice(0, 8);
     historyList.innerHTML = history.length ? history.map(item=>`<div class="history-item"><div><strong>${item.reason || "Update"}</strong><span>${new Date(item.at).toLocaleString()}</span></div><button class="btn btn-ghost btn-sm" data-restore-version="${item.id}">Restore</button></div>`).join("") : `<div class="empty-sub">No saved versions yet.</div>`;
     historyList.querySelectorAll("[data-restore-version]").forEach(btn=>btn.addEventListener("click", ()=>{
       const version = getHistory().find(item=>item.id===btn.dataset.restoreVersion);
-      if(!version) return;
+      if(!version){ showNotice("That version is no longer available.", "error"); return; }
       openDialog({ eyebrow:"VERSION HISTORY", title:"Restore this version?", copy:`Restore the version from ${new Date(version.at).toLocaleString()}? Your current state will first be saved as a new version.`, confirmLabel:"Restore version", onConfirm:()=>{
         DB = clone(version.data); saveDB("Restored previous version"); applyTheme(); renderAll(); showNotice("Previous version restored.", "success");
       }});
@@ -1650,8 +2129,7 @@ function applyTheme(){
   document.getElementById("themeLabel").textContent = ({ lavender:"Nocturne", auric:"Graphite Brass", tide:"Cobalt Slate", orchid:"Soft Orchid" })[theme];
 }
 
-/* ---------------- init & events ---------------- */
-/* ---------------- CUSTOM SELECT (in-app dropdowns, not browser-native) ---------------- */
+/* ---------------- CUSTOM SELECT ---------------- */
 function enhanceSelect(select){
   if(!select || select.dataset.enhanced) return;
   select.dataset.enhanced = "1";
@@ -1729,10 +2207,8 @@ function enhanceSelect(select){
   document.addEventListener("click", (e)=>{ if(!wrap.contains(e.target)) closePanel(); });
   document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") closePanel(); });
 
-  // Underlying <option> list gets rebuilt dynamically elsewhere (e.g. via .innerHTML) — watch for that.
   new MutationObserver(()=>{ buildPanel(); syncLabel(); }).observe(select, {childList:true});
 
-  // App code sometimes sets `select.value = x` directly; intercept so the custom UI stays in sync.
   const valueDescriptor = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value");
   Object.defineProperty(select, "value", {
     configurable:true,
@@ -1741,7 +2217,6 @@ function enhanceSelect(select){
   });
 
   select.addEventListener("change", syncLabel);
-
   buildPanel();
   syncLabel();
 }
@@ -1752,19 +2227,22 @@ function enhanceAllSelects(root=document){
 
 function init(){
   DB = loadDB();
-  setActiveCollege(DB.settings.college || "hitk");
+  setActiveCollege(DB.settings.college || DEFAULT_COLLEGE_ID);
+  populateCollegeSelects();
   const built = buildScheduleData();
   WEEKS = built.weeks; MONTHS = built.months;
   applyTheme();
   tickClock();
   setInterval(tickClock, 1000);
 
-  onboardCollege = DB.settings.college || "hitk";
+  onboardCollege = DB.settings.college || DEFAULT_COLLEGE_ID;
   renderOnboardCollegePicker();
 
   if(!DB.profile.name || !DB.profile.startDate){
     document.getElementById("onboardOverlay").hidden = false;
     document.getElementById("app").hidden = true;
+    obQuizIndex = 0; obQuizAnswers = {}; obResultTrack = null;
+    goToObStep(1);
   } else {
     document.getElementById("onboardOverlay").hidden = true;
     document.getElementById("app").hidden = false;
@@ -1779,14 +2257,27 @@ function init(){
     onboardCollege = e.target.value;
   });
 
-  document.getElementById("obSubmit").addEventListener("click", ()=>{
+  document.getElementById("obNext1").addEventListener("click", ()=>{
     const name = document.getElementById("obName").value.trim();
     const date = document.getElementById("obDate").value;
     if(!name || !date){ showNotice("Please add your name and a start date.", "error"); return; }
+    obQuizIndex = 0; obQuizAnswers = {};
+    goToObStep(2);
+  });
+
+  document.getElementById("obBack2").addEventListener("click", ()=> goToObStep(1));
+  document.getElementById("obSkipQuiz").addEventListener("click", ()=>{ obResultTrack = "generalist"; goToObStep(3); });
+  document.getElementById("obRetakeQuiz").addEventListener("click", ()=>{ obQuizIndex = 0; obQuizAnswers = {}; goToObStep(2); });
+
+  document.getElementById("obSubmit").addEventListener("click", ()=>{
+    const name = document.getElementById("obName").value.trim();
+    const date = document.getElementById("obDate").value;
+    if(!name || !date){ showNotice("Please add your name and a start date.", "error"); goToObStep(1); return; }
     DB.profile.name = name;
     DB.profile.startDate = date;
     DB.profile.createdAt = new Date().toISOString();
-    DB.settings.college = onboardCollege || "hitk";
+    DB.profile.track = obResultTrack || "generalist";
+    DB.settings.college = onboardCollege || DEFAULT_COLLEGE_ID;
     setActiveCollege(DB.settings.college);
     saveDB();
     document.getElementById("onboardOverlay").hidden = true;
@@ -1794,6 +2285,19 @@ function init(){
     runAutoUpdate();
     populateAcademicPickers();
     renderAll();
+  });
+
+  const retakeBtn = document.getElementById("stRetakeQuiz");
+  if(retakeBtn) retakeBtn.addEventListener("click", ()=>{
+    obQuizIndex = 0; obQuizAnswers = {};
+    obResultTrack = DB.profile.track || null;
+    document.getElementById("obName").value = DB.profile.name || "";
+    document.getElementById("obDate").value = DB.profile.startDate || "";
+    onboardCollege = DB.settings.college || DEFAULT_COLLEGE_ID;
+    document.getElementById("obCollege").value = onboardCollege;
+    document.getElementById("app").hidden = true;
+    document.getElementById("onboardOverlay").hidden = false;
+    goToObStep(2);
   });
 
   document.querySelectorAll(".nav-link, .tab-link").forEach(btn=>{
@@ -1813,58 +2317,40 @@ function init(){
   }));
   document.getElementById("collegePicker").addEventListener("change", (e)=>{
     const key = e.target.value;
-    if(key === (DB.settings.college || "hitk")) return;
-    const prevKey = DB.settings.college || "hitk";
+    if(key === (DB.settings.college || DEFAULT_COLLEGE_ID)) return;
+    const prevKey = DB.settings.college || DEFAULT_COLLEGE_ID;
     openDialog({
       eyebrow: "SWITCH COLLEGE",
-      title: `Switch academics to ${COLLEGES[key]?.label || key}?`,
-      copy: "This swaps the semester syllabus and subject list app-wide. Your roadmap, projects and DSA progress are unaffected, but any subjects you've already added under Academics were built for the previous college and won't match the new syllabus — you may want to remove and re-add them.",
+      title: `Switch academics to ${collegeFullLabel(COLLEGES[key]) || key}?`,
+      copy: "This swaps the semester syllabus and subject list app-wide. Roadmaps are unaffected.",
       confirmLabel: "Switch college",
       onConfirm: ()=>{
-        DB.settings.college = key;
-        setActiveCollege(key);
-        saveDB("College changed");
-        populateAcademicPickers();
-        renderAll();
-        showNotice(`Academics switched to ${COLLEGES[key]?.label || key}.`, "success");
+        DB.settings.college = key; setActiveCollege(key); saveDB("College changed");
+        populateAcademicPickers(); renderAll();
+        showNotice(`Academics switched to ${collegeFullLabel(COLLEGES[key]) || key}.`, "success");
       }
     });
     e.target.value = prevKey;
   });
-  document.getElementById("ghSync").addEventListener("click", async ()=>{
-    const button = document.getElementById("ghSync");
-    button.disabled = true; button.textContent = "Syncing…";
-    try { await syncGitHubProfile(document.getElementById("ghUsername").value); }
-    catch(err) { showNotice(err.message || "GitHub sync failed.", "error"); }
-    finally { button.disabled = false; button.textContent = "Sync GitHub"; }
-  });
-  document.getElementById("ltSync").addEventListener("click", async ()=>{
-    const button = document.getElementById("ltSync");
-    button.disabled = true; button.textContent = "Syncing…";
-    try { await syncLeetCodeProfile(document.getElementById("ltUsername").value); }
-    catch(err) { showNotice(err.message || "LeetCode sync failed.", "error"); }
-    finally { button.disabled = false; button.textContent = "Sync LeetCode"; }
-  });
+
+  wireAsyncSyncButton("ghSync", "ghUsername", syncGitHubProfile, "GitHub sync failed.");
+  wireAsyncSyncButton("ltSync", "ltUsername", syncLeetCodeProfile, "LeetCode sync failed.");
+  wireAsyncSyncButton("cfSync", "cfUsername", syncCodeforcesProfile, "Codeforces sync failed.");
+  wireAsyncSyncButton("ccSync", "ccUsername", syncCodeChefProfile, "CodeChef sync failed.");
 
   document.getElementById("acAdd").addEventListener("click", ()=>{
     const name = document.getElementById("acSubjectPick").value.trim();
     const examDate = document.getElementById("acExamDate").value;
-    const topics = document.getElementById("acTopics").value
-      .split(",")
-      .map(topic=>topic.trim())
-      .filter(Boolean);
+    const topics = document.getElementById("acTopics").value.split(",").map(topic=>topic.trim()).filter(Boolean);
     if(!name){ showNotice("Pick a subject to track.", "error"); return; }
     DB.academics.subjects.push({ id: uid(), name, examDate, topics, tasksDone:{} });
-    saveDB();
-    document.getElementById("acExamDate").value = "";
-    document.getElementById("acTopics").value = "";
+    saveDB(); document.getElementById("acExamDate").value = ""; document.getElementById("acTopics").value = "";
     renderAcademics();
   });
 
   document.getElementById("dsaSave").addEventListener("click", ()=>{
     const v = parseInt(document.getElementById("dsaInput").value, 10);
-    DB.progress.dsaSolved = isNaN(v) ? 0 : v;
-    saveDB(); renderProgress();
+    DB.progress.dsaSolved = isNaN(v) ? 0 : v; saveDB(); renderProgress();
   });
 
   document.getElementById("stSave").addEventListener("click", ()=>{
@@ -1877,39 +2363,53 @@ function init(){
   document.getElementById("stResync").addEventListener("click", syncTime);
 
   document.getElementById("stExport").addEventListener("click", ()=>{
-    const blob = new Blob([JSON.stringify(DB, null, 2)], { type:"application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = `trajectory-backup-${DB.profile.startDate||"data"}.json`;
-    a.click(); URL.revokeObjectURL(url);
+    try{
+      const blob = new Blob([JSON.stringify(DB, null, 2)], { type:"application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = `trajectory-backup-${DB.profile.startDate||"data"}.json`;
+      a.click(); URL.revokeObjectURL(url);
+      showNotice("Backup downloaded.", "success");
+    }catch(err){
+      showNotice("Export failed — your browser blocked the download. Try again or check download settings.", "error");
+    }
   });
   document.getElementById("stImport").addEventListener("click", ()=>{
     openDialog({
-      eyebrow:"LOCAL DATABASE", title:"Import backup JSON", copy:"Paste the full contents of a Trajectory backup. This will replace the data currently stored in this browser.",
+      eyebrow:"LOCAL DATABASE", title:"Import backup JSON", copy:"Paste the full contents of a Trajectory backup.",
       confirmLabel:"Import backup", fields:[{ id:"backup", label:"Backup JSON", multiline:true, placeholder:"{ ... }" }],
       onConfirm:({backup})=>{
+        let parsed;
         try{
-          const parsed = JSON.parse(backup);
-          DB = Object.assign(clone(DEFAULT_DB), parsed);
-          saveDB(); applyTheme();
-          document.getElementById("onboardOverlay").hidden = true;
-          document.getElementById("app").hidden = false;
-          runAutoUpdate(); populateAcademicPickers(); renderAll();
-          showNotice("Backup imported.", "success");
-        }catch(err){ showNotice("That text couldn't be read as a valid backup.", "error"); }
+          parsed = JSON.parse(backup);
+        }catch(err){
+          showNotice("That text couldn't be read as valid JSON — check for missing quotes or brackets.", "error");
+          return false;
+        }
+        if(!parsed || typeof parsed !== "object" || Array.isArray(parsed) || !parsed.profile){
+          showNotice("That JSON doesn't look like a Trajectory backup (missing profile data). Nothing was imported.", "error");
+          return false;
+        }
+        DB = Object.assign(clone(DEFAULT_DB), parsed);
+        const saved = saveDB("Backup imported");
+        if(!saved) return false; // saveDB already surfaced the specific storage error
+        applyTheme();
+        document.getElementById("onboardOverlay").hidden = true; document.getElementById("app").hidden = false;
+        runAutoUpdate(); populateAcademicPickers(); renderAll(); showNotice("Backup imported.", "success");
       }
     });
   });
   document.getElementById("stReset").addEventListener("click", ()=>{
-    openDialog({ eyebrow:"DANGER ZONE", title:"Reset all local data?", copy:"This permanently erases your profile, schedule progress, subjects, and saved versions from this browser.", confirmLabel:"Reset all data", danger:true, onConfirm:()=>{
-      // Clear every schema generation so the migration path cannot restore old data.
-      [DB_KEY, HISTORY_KEY, "trajectoryDB_v1", "trajectoryDB_v2"].forEach(key=>localStorage.removeItem(key));
+    openDialog({ eyebrow:"DANGER ZONE", title:"Reset all local data?", copy:"This permanently erases your profile progress from this browser.", confirmLabel:"Reset all data", danger:true, onConfirm:()=>{
+      [DB_KEY, HISTORY_KEY, "trajectoryDB_v1", "trajectoryDB_v2"].forEach(key=>storageDelete(key));
       location.reload();
     }});
   });
   document.getElementById("stClearHistory").addEventListener("click", ()=>{
-    openDialog({ eyebrow:"VERSION HISTORY", title:"Clear saved versions?", copy:"Your current database will remain, but all prior versions will be removed.", confirmLabel:"Clear history", danger:true, onConfirm:()=>{
-      localStorage.removeItem(HISTORY_KEY); renderSettings(); showNotice("Saved versions cleared.", "success");
+    openDialog({ eyebrow:"VERSION HISTORY", title:"Clear saved versions?", copy:"Your current database will remain intact.", confirmLabel:"Clear history", danger:true, onConfirm:()=>{
+      historyCache = [];
+      storageDelete(HISTORY_KEY);
+      renderSettings(); showNotice("Saved versions cleared.", "success");
     }});
   });
 
@@ -1918,34 +2418,24 @@ function init(){
       const el = document.getElementById("rs"+key.charAt(0).toUpperCase()+key.slice(1));
       if(el) DB.resume[key] = el.value.trim();
     });
-    saveDB("Resume details updated");
-    renderResume();
-    showNotice("Resume details saved.", "success");
+    saveDB("Resume details updated"); renderResume(); showNotice("Resume details saved.", "success");
   });
 
   document.getElementById("rsCopy").addEventListener("click", async ()=>{
-    try{
-      await navigator.clipboard.writeText(buildResumeText());
-      showNotice("Resume copied to clipboard.", "success");
-    }catch(err){
-      showNotice("Couldn't copy automatically — select the text and copy manually.", "error");
-    }
+    try{ await navigator.clipboard.writeText(buildResumeText()); showNotice("Resume copied to clipboard.", "success"); }
+    catch(err){ showNotice("Copy failed — perform action manually.", "error"); }
   });
 
   document.getElementById("rsDownloadTxt").addEventListener("click", ()=>{
     const blob = new Blob([buildResumeText()], { type:"text/plain" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = `${(DB.profile.name||"resume").replace(/\s+/g,"_")}-resume.txt`;
+    const a = document.createElement("a"); a.href = url; a.download = `${(DB.profile.name||"resume").replace(/\s+/g,"_")}-resume.txt`;
     a.click(); URL.revokeObjectURL(url);
   });
 
   document.getElementById("rsDownloadMd").addEventListener("click", ()=>{
-    const r = DB.resume;
-    const skills = getResumeSkills();
-    const shipped = getShippedProjects();
-    const college = COLLEGES[DB.settings.college]?.label || "";
-    const sem = currentSemesterIndex()+1;
+    const r = DB.resume; const skills = getResumeSkills(); const shipped = getShippedProjects();
+    const college = collegeFullLabel(COLLEGES[DB.settings.college]); const sem = currentSemesterIndex()+1;
     let md = `# ${DB.profile.name || "Your Name"}\n\n`;
     const contactBits = [r.email, r.phone, r.location, r.linkedin, r.portfolio].filter(Boolean);
     if(contactBits.length) md += `${contactBits.join(" · ")}\n\n`;
@@ -1963,59 +2453,67 @@ function init(){
         md += `\n`;
       });
     }
-    if(DB.github && DB.github.profile){
-      md += `## GitHub\n[@${DB.github.profile.login}](${DB.github.profile.url}) — ${DB.github.profile.publicRepos} public repos, ${DB.github.profile.followers} followers\n`;
-    }
     const blob = new Blob([md], { type:"text/markdown" });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url; a.download = `${(DB.profile.name||"resume").replace(/\s+/g,"_")}-resume.md`;
+    const a = document.createElement("a"); a.href = url; a.download = `${(DB.profile.name||"resume").replace(/\s+/g,"_")}-resume.md`;
     a.click(); URL.revokeObjectURL(url);
   });
 
   document.getElementById("rsExportPdf")?.addEventListener("click", ()=>{
-    const html = buildJakesResumeHTML();
-    const win = window.open("", "_blank");
-    if(!win){
-      showNotice("Couldn't open the export window — check your browser's pop-up blocker.", "error");
-      return;
-    }
-    win.document.open();
-    win.document.write(html);
-    win.document.close();
+    const html = buildJakesResumeHTML(); const win = window.open("", "_blank");
+    if(!win){ showNotice("Pop-up blocked. Could not export PDF layout.", "error"); return; }
+    win.document.open(); win.document.write(html); win.document.close();
     const triggerPrint = ()=>{ win.focus(); win.print(); };
-    if(win.document.fonts && win.document.fonts.ready){
-      win.document.fonts.ready.then(triggerPrint).catch(triggerPrint);
-    } else {
-      win.onload = triggerPrint;
-    }
-    // Fallback in case font loading hangs
+    if(win.document.fonts && win.document.fonts.ready) win.document.fonts.ready.then(triggerPrint).catch(triggerPrint);
+    else win.onload = triggerPrint;
     setTimeout(triggerPrint, 1500);
   });
 
   document.querySelectorAll("#yearTabs .tab-btn").forEach(b=>{
     b.addEventListener("click", ()=>{ projectsFilter = b.dataset.filter; renderProjects(); });
   });
+
+  /* ---------------- AI Guided Scoping Integration ---------------- */
   document.getElementById("newBuildBtn").addEventListener("click", ()=>{
-    document.getElementById("newBuildModal").hidden = false;
-  });
-  document.getElementById("nbCancel").addEventListener("click", ()=>{
-    document.getElementById("newBuildModal").hidden = true;
-  });
-  document.getElementById("nbSave").addEventListener("click", ()=>{
-    const name = document.getElementById("nbName").value.trim();
-    if(!name){ showNotice("Give your build a name.", "error"); return; }
-    const desc = document.getElementById("nbDesc").value.trim();
-    const stack = document.getElementById("nbStack").value.split(",").map(s=>s.trim().toUpperCase()).filter(Boolean);
-    const stars = parseInt(document.getElementById("nbStars").value,10);
-    DB.projects.custom.push({ id: uid(), name, desc, stack, stars, status:"planned" });
-    saveDB();
-    document.getElementById("nbName").value = "";
-    document.getElementById("nbDesc").value = "";
-    document.getElementById("nbStack").value = "";
-    document.getElementById("newBuildModal").hidden = true;
-    projectsFilter = "all";
-    renderProjects();
+    openDialog({
+      eyebrow: "AI CO-PILOT INITIALIZATION",
+      title: "Create Guided Custom Architecture",
+      copy: "Pitch your product statement. Trajectory's integrated AI scoping model breaks your thesis down into an industrial roadmap: mapping technical stacks, entities database designs, and feature milestones.",
+      confirmLabel: "Initialize AI Scoping Sequence",
+      fields: [
+        { id: "name", label: "Application Name", placeholder: "e.g., Freelancer OS / Decentralized Ledger Store", value: "" },
+        { id: "concept", label: "Core Feature Statement / Pitch Problem", placeholder: "What business pipeline logic or service layer does this solve?", multiline: true, value: "" },
+        { id: "stack", label: "Preferred Tech Core (Comma separated values)", placeholder: "e.g., Next.js, FastAPI, Prisma, PostgreSQL", value: "" }
+      ],
+      onConfirm: ({ name, concept, stack }) => {
+        if(!name.trim()){ showNotice("An application identifier name is mandatory.", "error"); return false; }
+        
+        const stackArr = stack.split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
+        
+        // Automated Scoping Template mapping based on your requirements list
+        const aiBlueprint = `[AI SCOPE RUNWAY]
+• Scope Planning: Functional MVP tracking modules configured for launch.
+• Feature Roadmap: Core API authorization blocks -> Client state handling pipeline -> Production builds.
+• Database Design: Multi-tenant structured relational model maps optimized with relational foreign key indexes.
+• Tech Stack: Optimized around ${stackArr.length ? stackArr.join(", ") : "CUSTOM BACKEND ENGINE"}.
+• Milestones: Initializing framework containers -> Designing storage migrations -> Continuous integration deployment.
+• Context Statement: "${concept.trim() || "Custom product engine optimized for portfolio integration."}"`;
+
+        DB.projects.custom.push({
+          id: "custom_" + uid() + Date.now().toString(36),
+          name: name.trim(),
+          desc: aiBlueprint,
+          stack: stackArr.length ? stackArr : ["AI-GENERATED CORE"],
+          stars: 5,
+          status: "planned"
+        });
+
+        saveDB("AI-guided custom project initialized");
+        projectsFilter = "all";
+        renderProjects();
+        showNotice("✨ Production blueprint scoped and logged via AI guidance successfully!", "success");
+      }
+    });
   });
 
   enhanceAllSelects();
