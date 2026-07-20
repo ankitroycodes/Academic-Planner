@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Trajectory — Engineering Roadmap</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -63,8 +63,8 @@ window.addEventListener('error', function(e){
            in app.js overwrites them from the COLLEGES registry in data.js at boot.
            Adding a college does NOT require editing this markup. -->
       <select class="field-input" id="obCollege">
-        <option value="hitk">HITK IT</option>
-        <option value="juit">JUIT CSE</option>
+        <option value="hitk">HITK · IT</option>
+        <option value="juit">JUIT · CSE</option>
       </select>
       <p class="pc-desc theme-help">Sets your semester syllabus and subject list. Change it later anytime in Settings.</p>
 
@@ -105,7 +105,7 @@ window.addEventListener('error', function(e){
   <!-- Sidebar -->
   <nav class="sidebar">
     <div class="brand">
-      <span class="brand-mark">▲</span>
+      <span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="1.4" fill="currentColor"/></svg></span>
       <div class="brand-text">
         <span class="brand-name">Trajectory</span>
         <span class="brand-op" id="brandOp">OP: —</span>
@@ -119,12 +119,12 @@ window.addEventListener('error', function(e){
     </div>
 
     <div class="nav-links">
-      <button class="nav-link active" data-page="home">Home</button>
-      <button class="nav-link" data-page="academics">Academics</button>
-      <button class="nav-link" data-page="projects">Projects</button>
-      <button class="nav-link" data-page="progress">Progress</button>
-      <button class="nav-link" data-page="resume">Resume</button>
-      <button class="nav-link" data-page="settings">Settings</button>
+      <button class="nav-link active" data-page="home"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 11.5L12 4l8 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9a1 1 0 001 1h3v-6h4v6h3a1 1 0 001-1v-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Home</button>
+      <button class="nav-link" data-page="academics"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5L3 9l9 4 9-4-9-4z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M7 11v5c0 1.1 2.24 2 5 2s5-.9 5-2v-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Academics</button>
+      <button class="nav-link" data-page="projects"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.2" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="4.4" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg></span>Projects</button>
+      <button class="nav-link" data-page="progress"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 20V10M12 20V4M20 20v-7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Progress</button>
+      <button class="nav-link" data-page="resume"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 4a2 2 0 00-2 2v13.5a1.5 1.5 0 002.4 1.2L12 18l3.6 2.7a1.5 1.5 0 002.4-1.2V6a2 2 0 00-2-2H8z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Resume</button>
+      <button class="nav-link" data-page="settings"><span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 13.5a1.7 1.7 0 000-3l-.9-.4a7.6 7.6 0 00-.7-1.7l.4-.9a1.7 1.7 0 00-2.1-2.1l-.9.4a7.6 7.6 0 00-1.7-.7l-.4-.9a1.7 1.7 0 00-3 0l-.4.9a7.6 7.6 0 00-1.7.7l-.9-.4a1.7 1.7 0 00-2.1 2.1l.4.9a7.6 7.6 0 00-.7 1.7l-.9.4a1.7 1.7 0 000 3l.9.4a7.6 7.6 0 00.7 1.7l-.4.9a1.7 1.7 0 002.1 2.1l.9-.4a7.6 7.6 0 001.7.7l.4.9a1.7 1.7 0 003 0l.4-.9a7.6 7.6 0 001.7-.7l.9.4a1.7 1.7 0 002.1-2.1l-.4-.9a7.6 7.6 0 00.7-1.7l.9-.4z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span>Settings</button>
     </div>
 
     <div class="sidebar-foot">
@@ -159,6 +159,79 @@ window.addEventListener('error', function(e){
         <div class="stat-chip" id="dayCounter">DAY 000</div>
       </header>
 
+      <div class="card lesson-hero-card" id="learnCard">
+        <div class="lesson-hero-glow" aria-hidden="true"></div>
+        <div class="lesson-hero-scene" id="learnHeroScene" aria-hidden="true">
+          <svg viewBox="0 0 340 300" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <radialGradient id="heroDome" cx="50%" cy="35%" r="65%">
+                <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.35"/>
+                <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+              </radialGradient>
+              <linearGradient id="heroRocketBody" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="var(--accent-strong)"/>
+                <stop offset="100%" stop-color="var(--accent)"/>
+              </linearGradient>
+              <linearGradient id="heroFlame" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="var(--accent-strong)" stop-opacity="0.9"/>
+                <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <circle class="hero-dome" cx="185" cy="140" r="120" fill="url(#heroDome)"/>
+            <g class="hero-stars">
+              <path d="M60 90l4 10 10 4-10 4-4 10-4-10-10-4 10-4z" fill="var(--accent-strong)" opacity="0.8"/>
+              <path d="M300 210l3 8 8 3-8 3-3 8-3-8-8-3 8-3z" fill="var(--accent-strong)" opacity="0.6"/>
+              <path d="M255 70l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="var(--accent-strong)" opacity="0.7"/>
+              <circle cx="95" cy="150" r="2" fill="var(--accent-strong)" opacity="0.7"/>
+              <circle cx="270" cy="120" r="2" fill="var(--accent-strong)" opacity="0.6"/>
+              <circle cx="120" cy="55" r="1.6" fill="var(--accent-strong)" opacity="0.6"/>
+              <circle cx="230" cy="180" r="1.6" fill="var(--accent-strong)" opacity="0.5"/>
+            </g>
+            <g class="hero-rocket" transform="translate(185,150)">
+              <path class="hero-flame" d="M-9 78c0 14 4 26 9 34 5-8 9-20 9-34-4 6-6 6-9 6s-5 0-9-6z" fill="url(#heroFlame)"/>
+              <path d="M0 -75c14 14 20 40 20 68 0 18-3 34-6 44H-14c-3-10-6-26-6-44 0-28 6-54 20-68z" fill="url(#heroRocketBody)"/>
+              <path d="M-6 37h12l5 26H-11z" fill="var(--surface)" opacity="0.85"/>
+              <circle cx="0" cy="-6" r="10" fill="var(--surface)"/>
+              <circle cx="0" cy="-6" r="10" fill="none" stroke="var(--accent)" stroke-width="2"/>
+              <path d="M-20 20c-14 4-22 16-24 34 14-2 24-10 30-22z" fill="var(--accent)"/>
+              <path d="M20 20c14 4 22 16 24 34-14-2-24-10-30-22z" fill="var(--accent)"/>
+            </g>
+            <g class="hero-clouds" fill="var(--accent-dim)">
+              <ellipse cx="110" cy="255" rx="55" ry="22"/>
+              <ellipse cx="255" cy="260" rx="65" ry="24"/>
+              <ellipse cx="185" cy="270" rx="80" ry="20"/>
+            </g>
+          </svg>
+        </div>
+        <div class="lesson-hero-top">
+          <div class="lesson-hero-copy">
+            <div class="lesson-hero-badge" id="learnGreetingBadge" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3v3M12 18v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M3 12h3M18 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="4.4" stroke="currentColor" stroke-width="1.8"/></svg>
+            </div>
+            <div class="card-eyebrow" id="learnGreetingEyebrow">—</div>
+            <h1 id="learnGreetingTitle">—</h1>
+            <div class="lesson-hero-meta" id="learnGreetingSub">—</div>
+          </div>
+          <button class="lesson-continue-btn" id="learnStartBtn" type="button">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="lesson-continue-icon"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg>
+            <span id="learnStartLabel">Continue</span>
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="16" height="16"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <div class="lesson-hero-progress">
+          <div class="lesson-hero-progress-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 17l6-6 4 4 8-8M21 11V7h-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div class="lesson-hero-progress-body">
+            <div class="lesson-hero-progress-row">
+              <span>Today's progress</span>
+              <span id="learnProgressCount">0/0</span>
+            </div>
+            <div class="year-bar-track lesson-hero-bar-track"><div class="year-bar-fill" id="learnProgressFill" style="width:0%"></div></div>
+          </div>
+        </div>
+      </div>
+
       <div id="prepBanner" class="card week-focus-card" hidden></div>
 
       <div class="card engine-metrics-card">
@@ -167,7 +240,7 @@ window.addEventListener('error', function(e){
             <div class="card-eyebrow">Engine metrics</div>
             <h2>Trajectory pulse</h2>
           </div>
-          <button class="btn btn-primary btn-sm" type="button" onclick="exportCalendarSchedule()">Export to iCal</button>
+          <button class="btn btn-primary btn-sm" id="exportIcalBtn" type="button">Export to iCal</button>
         </div>
         <canvas id="trajectoryTrendGraph" height="180"></canvas>
       </div>
@@ -382,11 +455,11 @@ window.addEventListener('error', function(e){
       <div class="grid-3" id="yearBars"></div>
 
       <div class="grid-2">
-        <div class="card">
+        <div class="card dsa-problems-card">
           <div class="card-eyebrow">DSA problems</div>
           <div class="big-number" id="dsaBigNumber">0</div>
           <div class="pc-desc" id="dsaTargetLine">Target so far: 0</div>
-          <div class="form-row" style="margin-top:14px">
+          <div class="form-row dsa-update-row">
             <input class="field-input" type="number" id="dsaInput" min="0" placeholder="Update total solved">
             <button class="btn btn-primary" id="dsaSave">Save</button>
           </div>
@@ -502,28 +575,56 @@ window.addEventListener('error', function(e){
       <div class="card">
         <div class="card-eyebrow">Appearance</div>
         <div class="theme-picker" id="themePicker">
-          <button type="button" class="theme-swatch" data-theme="lavender"><span></span>Nocturne Lavender</button>
-          <button type="button" class="theme-swatch" data-theme="auric"><span></span>Graphite Brass</button>
-          <button type="button" class="theme-swatch" data-theme="tide"><span></span>Cobalt Slate</button>
-          <button type="button" class="theme-swatch" data-theme="orchid"><span></span>Soft Orchid</button>
+          <button type="button" class="theme-swatch" data-theme="lavender">
+            <span class="theme-swatch-dots"><i style="background:#9A89DC"></i><i style="background:#D0C2FA"></i></span>
+            <span class="theme-swatch-name">Nocturne Lavender</span>
+            <span class="theme-swatch-active">Active</span>
+          </button>
+          <button type="button" class="theme-swatch" data-theme="auric">
+            <span class="theme-swatch-dots"><i style="background:#C0A45D"></i><i style="background:#DEC98D"></i></span>
+            <span class="theme-swatch-name">Graphite Brass</span>
+            <span class="theme-swatch-active">Active</span>
+          </button>
+          <button type="button" class="theme-swatch" data-theme="tide">
+            <span class="theme-swatch-dots"><i style="background:#7199D3"></i><i style="background:#B9D0F2"></i></span>
+            <span class="theme-swatch-name">Cobalt Slate</span>
+            <span class="theme-swatch-active">Active</span>
+          </button>
+          <button type="button" class="theme-swatch" data-theme="orchid">
+            <span class="theme-swatch-dots"><i style="background:#7C3AED"></i><i style="background:#5B21B6"></i></span>
+            <span class="theme-swatch-name">Soft Orchid</span>
+            <span class="theme-swatch-active">Active</span>
+          </button>
         </div>
         <p class="pc-desc theme-help">Choose a complete colour system. Your selection is saved locally.</p>
       </div>
 
       <div class="card">
-        <div class="card-eyebrow">Institution</div>
+        <div class="pulse-card-head">
+          <span class="pulse-card-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3l9 4.9-9 4.9-9-4.9L12 3z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M6.5 10.5V16c0 1.4 2.46 3 5.5 3s5.5-1.6 5.5-3v-5.5M21 8v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div class="pulse-card-titles">
+            <div class="card-eyebrow">Institution</div>
+            <div class="pulse-card-name">College &amp; syllabus source</div>
+          </div>
+        </div>
         <select class="field-input" id="collegePicker" style="margin-top:8px">
-          <option value="hitk">HITK IT</option>
-          <option value="juit">JUIT CSE</option>
+          <option value="hitk">HITK · IT</option>
+          <option value="juit">JUIT · CSE</option>
         </select>
         <div class="institution-detail" id="institutionDetail"></div>
         <p class="pc-desc theme-help">Switches the semester syllabus and subjects app-wide. Your roadmap and projects stay the same.</p>
       </div>
 
       <div class="card">
-        <div class="card-eyebrow">GitHub pulse</div>
+        <div class="pulse-card-head">
+          <span class="pulse-card-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.48 2 2 6.58 2 12.2c0 4.5 2.87 8.3 6.84 9.65.5.1.68-.22.68-.5v-1.75c-2.78.62-3.37-1.37-3.37-1.37-.46-1.2-1.11-1.52-1.11-1.52-.9-.63.07-.62.07-.62 1 .07 1.53 1.05 1.53 1.05.9 1.57 2.34 1.12 2.91.85.09-.66.35-1.12.63-1.38-2.22-.26-4.56-1.14-4.56-5.06 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.31.1-2.72 0 0 .84-.28 2.75 1.05a9.3 9.3 0 015 0c1.9-1.33 2.74-1.05 2.74-1.05.56 1.41.2 2.46.1 2.72.65.72 1.03 1.63 1.03 2.75 0 3.93-2.34 4.79-4.57 5.05.36.32.68.94.68 1.9v2.82c0 .28.18.6.69.5A10.2 10.2 0 0022 12.2C22 6.58 17.52 2 12 2z" fill="currentColor"/></svg></span>
+          <div class="pulse-card-titles">
+            <div class="card-eyebrow">GitHub pulse</div>
+            <div class="pulse-card-name">Repositories &amp; activity</div>
+          </div>
+        </div>
         <p class="pc-desc">Connect a public GitHub username to bring repositories and public activity into your dashboard. No token is stored. This account also becomes your verified development identity — repos you submit must belong to it.</p>
-        <div class="form-row" style="margin-top:14px">
+        <div class="pulse-form-row">
           <input class="field-input" id="ghUsername" placeholder="GitHub username">
           <button class="btn btn-primary" id="ghSync">Sync GitHub</button>
         </div>
@@ -531,15 +632,27 @@ window.addEventListener('error', function(e){
       </div>
 
       <div class="card">
-        <div class="card-eyebrow">Submission history</div>
+        <div class="pulse-card-head">
+          <span class="pulse-card-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 12.5l2 2 4.5-5M12 3a9 9 0 100 18 9 9 0 000-18z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div class="pulse-card-titles">
+            <div class="card-eyebrow">Submission history</div>
+            <div class="pulse-card-name">Verification log</div>
+          </div>
+        </div>
         <p class="pc-desc">Every verification attempt — passed or failed — is logged here with what happened and when.</p>
         <div class="submission-history" id="submissionHistory"></div>
       </div>
 
       <div class="card">
-        <div class="card-eyebrow">LeetCode pulse</div>
+        <div class="pulse-card-head">
+          <span class="pulse-card-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13.5 3l-8 8.4a2.4 2.4 0 000 3.3l4.6 4.7a2.4 2.4 0 003.4 0l2-2a1.3 1.3 0 00-1.85-1.85l-1.75 1.75-3.8-3.85 6.4-6.7a1.3 1.3 0 00-1.85-1.85l-.2.2z" fill="currentColor"/><path d="M9.5 13.2h7.3a1.3 1.3 0 100-2.6H9.5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></span>
+          <div class="pulse-card-titles">
+            <div class="card-eyebrow">LeetCode pulse</div>
+            <div class="pulse-card-name">Solved counts &amp; ranking</div>
+          </div>
+        </div>
         <p class="pc-desc">Connect a public LeetCode username to bring your solved counts and ranking into your dashboard. No token is stored.</p>
-        <div class="form-row" style="margin-top:14px">
+        <div class="pulse-form-row">
           <input class="field-input" id="ltUsername" placeholder="LeetCode username">
           <button class="btn btn-primary" id="ltSync">Sync LeetCode</button>
         </div>
@@ -547,9 +660,15 @@ window.addEventListener('error', function(e){
       </div>
 
       <div class="card">
-        <div class="card-eyebrow">Codeforces pulse</div>
+        <div class="pulse-card-head">
+          <span class="pulse-card-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="13" width="4.5" height="8" rx="1" fill="currentColor"/><rect x="9.75" y="8" width="4.5" height="13" rx="1" fill="currentColor"/><rect x="16.5" y="3" width="4.5" height="18" rx="1" fill="currentColor"/></svg></span>
+          <div class="pulse-card-titles">
+            <div class="card-eyebrow">Codeforces pulse</div>
+            <div class="pulse-card-name">Rating &amp; rank</div>
+          </div>
+        </div>
         <p class="pc-desc">Connect a public Codeforces handle to bring your rating and rank into your dashboard. No token is stored. Codeforces' API doesn't support requests directly from browsers, so sync can occasionally fail even for a valid handle — that's a limitation on their end, not a broken profile.</p>
-        <div class="form-row" style="margin-top:14px">
+        <div class="pulse-form-row">
           <input class="field-input" id="cfUsername" placeholder="Codeforces handle">
           <button class="btn btn-primary" id="cfSync">Sync Codeforces</button>
         </div>
@@ -557,9 +676,15 @@ window.addEventListener('error', function(e){
       </div>
 
       <div class="card">
-        <div class="card-eyebrow">CodeChef pulse</div>
+        <div class="pulse-card-head">
+          <span class="pulse-card-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2l2.2 4.5 5 .7-3.6 3.5.85 4.95L12 13.35 7.55 15.65l.85-4.95L4.8 7.2l5-.7L12 2z" fill="currentColor"/></svg></span>
+          <div class="pulse-card-titles">
+            <div class="card-eyebrow">CodeChef pulse</div>
+            <div class="pulse-card-name">Rating &amp; rank</div>
+          </div>
+        </div>
         <p class="pc-desc">Connect a public CodeChef username to bring your rating and rank into your dashboard. No token is stored. CodeChef has no official public API, so this relies on a third-party service that can occasionally be unavailable.</p>
-        <div class="form-row" style="margin-top:14px">
+        <div class="pulse-form-row">
           <input class="field-input" id="ccUsername" placeholder="CodeChef username">
           <button class="btn btn-primary" id="ccSync">Sync CodeChef</button>
         </div>
@@ -593,7 +718,7 @@ window.addEventListener('error', function(e){
   </main>
 </div>
 
-<script src="data.js"></script>
-<script src="app.js"></script>
+<script src="bundle.js"></script>
+<script src="ui-motion.js"></script>
 </body>
 </html>

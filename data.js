@@ -1,21 +1,16 @@
+/* ============================================================
+   TRAJECTORY — Curriculum & Syllabus Data
+   ============================================================
+   ES module: every symbol other modules need is `export`ed below.
+   The window.DEFAULT_DB stub that used to live here was a stale,
+   incomplete duplicate of the real default DB shape (storage.js
+   owns the authoritative one, see the old comment further down
+   this file explaining why the `window.X =` re-exports silently
+   never ran) — it has been removed rather than fixed. storage.js's
+   own literal is the single source of truth for DEFAULT_DB.
+   ============================================================ */
 
-
-window.DEFAULT_DB = {
-  profile: { name: "", startDate: "", createdAt: "", track: null },
-  settings: { theme: "lavender", college: "hitk" },
-  schedule: { currentIndex: 0, offsetDays: 0, weekStatus: {}, weekTaskDone: {} },
-  academics: { subjects: [] },
-  projects: { shipped: {}, started: {}, meta: {}, custom: [], submissions: [] },
-  progress: { dsaSolved: 0 },
-  prep: { done: {} },
-  timeSync: { offsetMs: 0, lastSynced: null, verified: false },
-  tracking: { dailyLogs: {}, historicalPerformance: [] },
-  github: { username: "", profile: null, repos: [], events: [], lastSyncedAt: null, verifiedIdentity: false },
-  leetcode: { username: "", profile: null, lastSyncedAt: null },
-  resume: { email: "", phone: "", location: "", linkedin: "", portfolio: "", targetRole: "", summary: "" }
-};
-
-const CURRICULUM = {
+export const CURRICULUM = {
   years: [
     {
       id: 1, label: "Year 1", window: "2026–27", theme: "Programming Foundations",
@@ -46,7 +41,7 @@ const CURRICULUM = {
         { name:"Month 12 (Summer Break)", focus:["Full Stack", "Consolidation"],
           dsa:30, project:"Academic Planner v1", desc:"Combines everything learned. ⭐ Optional Challenge: Deploy everything online (Frontend to Vercel, Backend to Render).", stack:["FULL STACK"] }
       ],
-      milestones: [["CGPA","8.5 – 9.5+"],["DSA problems","150–200 solved"],["Projects shipped","6–8 deployed"],["GitHub commits","300+"],["Portfolio","Live website"],["Blog posts","3–5 published"]]
+      milestones: [["CGPA","8.5 – 9.5+"],["DSA problems","60–80 solved"],["Projects shipped","2–3 deployed"],["GitHub commits","80–120"],["Portfolio","Basic profile set up"],["Blog posts","1–2 (optional)"]]
     },
     {
       id: 2, label: "Year 2", window: "2027–28", theme: "Full Stack Development",
@@ -203,8 +198,12 @@ const CURRICULUM = {
   }
 };
 
-
-const TRACKS = {
+/* ============================================================
+   FIELD QUIZ — helps a new user pick a starting specialization.
+   Confusion is an explicit, first-class outcome: Q4's third option
+   force-selects the generalist track regardless of the other answers.
+   ============================================================ */
+export const TRACKS = {
   "ai-ml": {
     id: "ai-ml", label: "AI & Machine Learning", tagline: "Models, data, and systems that learn.",
     blurb: "You lean toward building intelligent systems — recommenders, LLM apps, computer vision, predictive models. Lean into the AI electives and ML fundamentals threaded through every year."
@@ -231,15 +230,15 @@ const TRACKS = {
   }
 };
 
-
-
-
-
-
-
-
-
-const QUIZ = [
+// Each option maps to a track (or null/"generalist"). Each question also
+// carries a `weight` — how strongly that single question, on its own, tends
+// to predict someone's actual specialization. Questions that ask directly
+// about what someone wants to build/work on are highly diagnostic (weight 3);
+// questions about adjacent preferences (debugging style, work rhythm) are
+// still relevant but weaker signals on their own (weight 1-2). Scoring sums
+// weight per track rather than counting raw picks, so one strong answer can
+// outweigh several weak ones pointing elsewhere — see computeTrackFromAnswers.
+export const QUIZ = [
   {
     id: "q1", weight: 3,
     prompt: "What are you most excited to build?",
@@ -341,587 +340,592 @@ const QUIZ = [
   }
 ];
 
-
+/* ============================================================
+   WEEK_BLUEPRINTS — hand-authored, project-specific weekly tasks
+   192 entries (4 years × 12 months × 4 weeks). Each week's skill,
+   academic and project tasks are tied to that month's actual
+   project, stack and focus topics rather than generic filler.
+   ============================================================ */
 const WEEK_BLUEPRINTS = [
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 1", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn Python variables, data types and operators", "Solve 5 DSA problems on arrays/strings"] },
+    skill: { title: "Skill sprint", tasks: ["Learn Python variables, data types, operators and input/output", "Solve 5 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Understand binary, decimal and hexadecimal conversions by hand", "Solve 10 base-conversion practice problems"] },
-    project: { title: "Project push", tasks: ["Design the calculator's menu and core arithmetic functions (add/sub/mul/div)", "Implement input validation for divide-by-zero and bad input"] }
+    project: { title: "Project push", tasks: ["Design the CLI's menu system and core calculator (add/sub/mul/div)", "Implement input validation for divide-by-zero and bad input"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 1", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn loops, conditionals and functions in Python", "Solve 5 DSA problems on loops/conditionals"] },
+    skill: { title: "Skill sprint", tasks: ["Learn loops, conditionals and functions in Python", "Solve 5 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn how memory and the CPU execute a program (fetch-decode-execute)", "Diagram the fetch-decode-execute cycle from memory"] },
-    project: { title: "Project push", tasks: ["Add memory functions (M+, M-, MR, MC) with persistent state", "Write unit tests for arithmetic and memory operations"] }
+    project: { title: "Project push", tasks: ["Add a unit converter module (length, weight, temperature)", "Wire the converter into the CLI menu with clean input prompts"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 1", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn lists, dicts, tuples and file I/O in Python", "Solve 5 DSA problems using lists/dicts"] },
+    skill: { title: "Skill sprint", tasks: ["Learn Python lists, dicts, tuples and file I/O", "Solve 5 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Read what AI, ML and DL are and how they differ", "Write a 1-paragraph explanation of ML vs DL in your own words"] },
-    project: { title: "Project push", tasks: ["Add scientific functions: sqrt, power, percentage, factorial", "Handle edge cases: negative sqrt, overflow, invalid factorial input"] }
+    project: { title: "Project push", tasks: ["Add a password generator with length and character-set options", "Add a file organizer that sorts files in a folder by extension"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 1", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Set up VS Code, Git, GitHub and WSL/Ubuntu end to end", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Set up VS Code, Git, GitHub and a Linux/WSL environment end to end", "Solve 5 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn conceptually how an LLM turns text into tokens and predictions", "Explain to someone else, in plain language, what an LLM does"] },
-    project: { title: "Project push", tasks: ["Polish the CLI UX (clear prompts, error messages, history log)", "Push the finished calculator to GitHub with a README and usage examples"] }
+    project: { title: "Project push", tasks: ["Polish the CLI UX across all four tools (prompts, errors, history log)", "Push the finished Developer Toolbox CLI to GitHub with a README and usage examples"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 2", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn Python OOP — classes, objects, `self`, constructors", "Solve 5 DSA problems, OOP-flavored where possible"] },
+    skill: { title: "Skill sprint", tasks: ["Learn HTML5 semantic structure — sections, headers, nav, forms", "Solve 5 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Learn Git branching and how to create/merge a branch locally", "Practice 3 merges with intentional (small) conflicts to resolve"] },
     project: { title: "Project push", tasks: ["Wireframe the portfolio (hero, about, projects, contact) on paper or Figma", "Build the HTML skeleton for all four sections"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 2", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn Python exceptions (try/except/finally) and virtual environments", "Solve 5 DSA problems on exception-safe logic"] },
+    skill: { title: "Skill sprint", tasks: ["Learn CSS3 box model, selectors and positioning", "Solve 5 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn pull requests — open, review and merge a PR on a test repo", "Write a checklist of what makes a good PR description"] },
-    project: { title: "Project push", tasks: ["Style the layout with CSS — typography, spacing, color palette", "Make the nav bar sticky and add smooth-scroll to sections"] }
+    project: { title: "Project push", tasks: ["Style the layout with CSS — typography, spacing and a color palette", "Build the nav bar with Flexbox and make it sticky"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 2", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn HTML5 semantic structure — sections, headers, nav, forms", "Solve 5 DSA problems on strings"] },
+    skill: { title: "Skill sprint", tasks: ["Learn Flexbox for one-dimensional layouts", "Solve 5 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Refactor your calculator project into a proper class-based structure", "Add exception handling to at least 3 methods that lacked it"] },
-    project: { title: "Project push", tasks: ["Add your calculator project as a showcased project card with a link", "Make the layout responsive across mobile, tablet and desktop widths"] }
+    project: { title: "Project push", tasks: ["Lay out the projects grid with CSS Grid and add project cards", "Make the layout responsive across mobile, tablet and desktop widths"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 2", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn CSS3 — box model, selectors, positioning, basic responsiveness", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn CSS Grid and basic responsive breakpoints", "Solve 5 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Set up a Python virtual environment for a new project from scratch", "Document the venv setup steps in a personal notes file"] },
-    project: { title: "Project push", tasks: ["Deploy the site to GitHub Pages", "Share the live link and fix any deployment issues that show up"] }
+    project: { title: "Project push", tasks: ["Add smooth-scroll navigation and a working contact form layout", "Deploy the site to GitHub Pages and link it from your GitHub profile"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 3", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn C++ basics — syntax, variables, control flow", "Solve 5 DSA problems in C++"] },
+    skill: { title: "Skill sprint", tasks: ["Learn Python/C++ OOP — classes, objects, constructors", "Solve 5 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Learn what a process is and how the OS schedules it", "Diagram process states (new/ready/running/waiting/terminated)"] },
-    project: { title: "Project push", tasks: ["Design the expense record schema (date, category, amount, note)", "Implement add-expense and list-expenses using local file storage"] }
+    project: { title: "Project push", tasks: ["Design the Expense class and category schema (date, category, amount, note)", "Implement add-expense and list-expenses using local file storage"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 3", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn pointers (intro) and references in C++", "Solve 5 DSA problems using pointers/references"] },
+    skill: { title: "Skill sprint", tasks: ["Learn encapsulation and basic exception handling", "Solve 5 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn the difference between a process and a thread", "Write 3 real-world examples of multithreaded programs you use"] },
     project: { title: "Project push", tasks: ["Implement edit and delete for existing expense entries", "Add input validation for dates and amounts"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 3", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn the STL vector and pair, and basic iterators", "Solve 5 DSA problems using vector/pair"] },
+    skill: { title: "Skill sprint", tasks: ["Learn file-based persistence (reading/writing structured data)", "Solve 5 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Read about neural networks conceptually — neurons, weights, layers", "Sketch a 3-layer neural network diagram by hand"] },
     project: { title: "Project push", tasks: ["Add category-wise and monthly summary reports", "Add a simple text-based chart (bar-of-asterisks) for spending by category"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 3", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn Flexbox and CSS Grid for layout", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Review OOP design by refactoring a small existing script", "Solve 5 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Read about transformers conceptually — attention, context window", "Write a 3-sentence explanation of 'attention' in your own words"] },
-    project: { title: "Project push", tasks: ["Refactor the codebase into functions/modules cleanly", "Push to GitHub with a README explaining the storage format"] }
+    project: { title: "Project push", tasks: ["Refactor the codebase into clean classes/modules", "Push to GitHub with a README explaining the storage format"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 4", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn JavaScript variables, functions and the DOM", "Solve 5 DSA problems in JavaScript"] },
+    skill: { title: "Skill sprint", tasks: ["Learn JavaScript variables, functions and DOM manipulation", "Solve 4 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Learn Linux shell scripting basics — variables, if, loops in bash", "Write a bash script that renames files in a folder by pattern"] },
     project: { title: "Project push", tasks: ["Sign up for a weather API key and test a basic fetch call", "Build the HTML/CSS shell for the search input and result card"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 4", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn JS events (click, input, submit) and event listeners", "Solve 5 DSA problems on event-driven logic patterns"] },
+    skill: { title: "Skill sprint", tasks: ["Learn JS events (click, input, submit) and event listeners", "Solve 4 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn shell scripting — piping, redirection, grep/awk basics", "Write a script that searches log files for a keyword and counts matches"] },
     project: { title: "Project push", tasks: ["Wire up the search input to fetch live weather by city name", "Handle loading and error states (city not found, network failure)"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 4", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn the fetch API and working with async/await + JSON", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn the Fetch API and working with async/await + JSON", "Solve 4 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Practice SQL joins conceptually (even before Month 8's deep dive)", "Write 3 SQL SELECT queries against a sample dataset"] },
     project: { title: "Project push", tasks: ["Display temperature, condition, humidity and wind with icons", "Add a 5-day forecast section using the API's forecast endpoint"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 4", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn SQL basics — SELECT, INSERT, UPDATE, DELETE", "Solve 5 SQL practice queries on a sample database"] },
+    skill: { title: "Skill sprint", tasks: ["Learn error handling patterns for network requests", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review the month — JS, fetch API, SQL, shell scripting", "Write a one-page personal cheat sheet covering all four topics"] },
-    project: { title: "Project push", tasks: ["Add unit toggling (Celsius/Fahrenheit) and polish the UI", "Deploy the app and add it to your portfolio site"] }
+    project: { title: "Project push", tasks: ["Add unit toggling (Celsius/Fahrenheit) and polish the UI", "Deploy the app and add it to your portfolio"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 5", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Revise Python fundamentals — write 3 small scripts from scratch, no notes", "Solve 8 DSA problems, mixed review of the semester"] },
+    skill: { title: "Skill sprint", tasks: ["Learn SQL basics — SELECT, INSERT, UPDATE, DELETE", "Solve 3 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Update your GitHub profile README with a summary of Month 1-4 projects", "Pin your 4 best repos on your GitHub profile"] },
     project: { title: "Project push", tasks: ["Design the SQL schema for students, subjects and results", "Set up the database and write the CREATE TABLE statements"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 5", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Revise Git/GitHub workflow — branch, commit, PR, merge on a scratch repo", "Solve 8 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn SQL WHERE, ORDER BY and aggregate functions (SUM, AVG, COUNT)", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Outline a blog post about one thing you learned this semester", "Write the first full draft of the blog post"] },
     project: { title: "Project push", tasks: ["Implement adding a student and entering their subject-wise marks", "Implement querying a student's full result with computed percentage"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 5", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Revise HTML/CSS/JS by rebuilding one small page from memory", "Solve 8 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn SQL joins conceptually and GROUP BY for summaries", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Edit and publish your first technical blog post", "Share the post link on your resume/profile notes"] },
     project: { title: "Project push", tasks: ["Implement class-wide reports (topper, average, pass/fail counts)", "Add input validation and handle duplicate student entries"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 5", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Revise Linux/bash basics — file system navigation and permissions", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn basic schema design — primary keys and simple constraints", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Do a full semester retro — what's solid, what's shaky, what to fix next", "Write down 3 concrete goals for Month 6 onward"] },
     project: { title: "Project push", tasks: ["Clean up the SQL queries and add comments explaining each one", "Push to GitHub with sample data and a README"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 6 (Winter Break)", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn what React is conceptually and set up your first React project", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn what React is conceptually and set up your first React project", "Solve 3 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Read how a React component tree renders to the DOM", "Draw the component tree for the Spaced-Repetition Lecture Notes App you're about to build"] },
     project: { title: "Project push", tasks: ["Scaffold the React app and build the static layout for note cards", "Set up local state to hold an array of notes"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 6 (Winter Break)", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn npm — package.json, installing/removing packages, scripts", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn JSX, props and component composition", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn the difference between props and local component data", "Write a short note contrasting props with plain JS variables"] },
-    project: { title: "Project push", tasks: ["Implement creating a new note via a form", "Implement deleting a note from the list"] }
+    project: { title: "Project push", tasks: ["Implement creating a new note via a controlled form", "Implement deleting a note from the list"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 6 (Winter Break)", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn REST API conventions and JSON structure", "Solve 5 DSA problems on JSON-shaped data"] },
+    skill: { title: "Skill sprint", tasks: ["Learn React state with useState and controlled inputs", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn common HTTP status codes (200, 201, 400, 404, 500) and when each applies", "Match 10 real API error scenarios to the correct status code"] },
-    project: { title: "Project push", tasks: ["Implement editing an existing note in place", "Persist notes so they survive a page refresh (in-memory app state or simple storage)"] }
+    project: { title: "Project push", tasks: ["Implement editing an existing note in place", "Persist notes so they survive a page refresh (localStorage)"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 6 (Winter Break)", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn HTTP fundamentals — methods, status codes, headers", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn conditional rendering and rendering lists with keys", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review the whole break module — React, npm, REST, HTTP", "Write a one-page cheat sheet for the four topics"] },
-    project: { title: "Project push", tasks: ["Polish styling and empty/loading states", "Deploy the Spaced-Repetition Lecture Notes App and link it from your portfolio"] }
+    project: { title: "Project push", tasks: ["Polish styling and add empty/loading states", "Deploy the Notes App and link it from your portfolio"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 7", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn advanced Python OOP — inheritance, polymorphism, magic methods", "Solve 5 DSA problems using OOP structures"] },
+    skill: { title: "Skill sprint", tasks: ["Learn useEffect and syncing state with localStorage", "Solve 4 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Refactor one earlier Python project to use classes and inheritance", "Write a short note on when inheritance helps vs over-complicates"] },
-    project: { title: "Project push", tasks: ["Design the task data shape (id, text, done, priority) and component layout", "Build the TaskList and TaskItem components with props"] }
+    project: { title: "Project push", tasks: ["Design the habit data shape (id, name, streak, log-by-date) and component layout", "Build the HabitList and HabitItem components with props"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 7", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn to build and use a Python package/module structure", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn lifting state up and passing data between sibling components", "Solve 4 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Package one of your Python scripts as an installable module locally", "Document the module's functions with docstrings"] },
-    project: { title: "Project push", tasks: ["Implement adding a new task via a controlled form input", "Implement marking a task complete/incomplete"] }
+    project: { title: "Project push", tasks: ["Implement adding a new habit via a controlled form input", "Implement marking a habit done/undone for today"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 7", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Deepen React — component composition and prop drilling", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn conditional styling and simple derived state (streaks, totals)", "Solve 4 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Study how React re-renders when state changes", "Write a short explanation of the React render cycle in your own words"] },
-    project: { title: "Project push", tasks: ["Implement deleting a task and filtering by status (all/active/done)", "Add task counts and an empty-state message"] }
+    project: { title: "Project push", tasks: ["Compute and display streaks, and persist all habit data to localStorage", "Add a simple weekly progress chart per habit"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 7", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn React state with useState and controlled inputs", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn basic charting with a lightweight library or plain SVG", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Compare your Sleep-Cycle & Study-Habit Tracker's component structure with a reference example", "List 2 improvements you'd make to your component breakdown"] },
-    project: { title: "Project push", tasks: ["Polish UI, add priority color-coding", "Deploy the Sleep-Cycle & Study-Habit Tracker and add it to your portfolio"] }
+    project: { title: "Project push", tasks: ["Polish UI, add empty state and habit-delete confirmation", "Deploy the Habit Tracker and add it to your portfolio"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 8", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn FastAPI (or Node/Express) basics — routes and request handling", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn Node.js and Express basics — routes and request handling", "Solve 3 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Learn prompt engineering basics — clear instructions, examples, constraints", "Write 3 prompts for the same task, compare the outputs"] },
-    project: { title: "Project push", tasks: ["Set up the FastAPI/Express project structure and a health-check route", "Connect the backend to your SQL database"] }
+    project: { title: "Project push", tasks: ["Set up the Express project structure and a health-check route", "Connect the backend to your SQL database"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 8", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn how to connect your backend to a SQL database", "Solve 5 DSA problems on hash-based lookups"] },
+    skill: { title: "Skill sprint", tasks: ["Learn connecting an Express backend to a SQL database", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn common LLM limitations — hallucination, context limits, bias", "Write 3 real examples where an LLM could plausibly get something wrong"] },
-    project: { title: "Project push", tasks: ["Implement CRUD endpoints for notes (create, read, update, delete)", "Add request validation for note fields"] }
+    project: { title: "Project push", tasks: ["Implement CRUD endpoints for academic resources (create, read, update, delete)", "Add request validation for resource fields"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 8", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn SQL joins — inner, left, and when to use each", "Write 5 practice queries using joins"] },
+    skill: { title: "Skill sprint", tasks: ["Learn REST conventions and structuring resource endpoints", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Design the normalized schema for the Library Reservation & Notes API (notes, tags, users)", "Draw an ER diagram for the schema"] },
-    project: { title: "Project push", tasks: ["Implement tagging notes and a join-based endpoint to filter notes by tag", "Add pagination to the list-notes endpoint"] }
+    project: { title: "Project push", tasks: ["Implement filtering resources by subject/tag and add pagination", "Handle and return consistent error responses"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 8", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn indexing and basic normalization (1NF, 2NF, 3NF)", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn API documentation basics and testing with a REST client", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review joins, indexing and normalization together", "Rewrite one earlier unindexed query to use an index and explain why it helps"] },
     project: { title: "Project push", tasks: ["Write API docs (route list, params, example responses)", "Push to GitHub and test all endpoints with a REST client"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 9", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn how JWTs are structured and how they're signed/verified", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn how JWTs are structured and how they're signed/verified", "Solve 3 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Compare JWT-based auth vs session-based auth for a given app", "Write a short note on which you'd choose for the Library Reservation & Notes API and why"] },
     project: { title: "Project push", tasks: ["Build the signup endpoint with password hashing", "Build the login endpoint that issues a JWT on success"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 9", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn cookies vs sessions and where each is stored/used", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn password hashing (bcrypt) and why plaintext storage is unsafe", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn how HTTPS protects credentials in transit", "Write a 3-sentence explanation of why auth over HTTP is unsafe"] },
     project: { title: "Project push", tasks: ["Add middleware to protect routes using the JWT", "Add token expiry and a refresh-token flow"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 9", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn password hashing (bcrypt/argon2) and why plaintext storage is unsafe", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn middleware patterns for protecting routes", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Study a real signup/login flow from a well-known app (conceptually)", "List the steps their flow takes from signup to first authenticated request"] },
     project: { title: "Project push", tasks: ["Add basic session handling and logout", "Write tests for signup, login, and access to protected routes"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 9", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn deployment basics — environment variables, build steps, hosting", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn deployment basics — environment variables and build steps", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review JWT, sessions, hashing and deployment together", "Write a one-page cheat sheet for the auth stack"] },
     project: { title: "Project push", tasks: ["Deploy the auth system to Render or Vercel", "Set up environment variables securely and confirm the deployed version works end to end"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 10", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn DNS — how a domain name resolves to an IP", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn how WebSockets differ from plain HTTP requests", "Solve 3 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Trace a request from typing a URL to receiving a response (DNS, TCP, HTTP)", "Diagram the full request lifecycle from browser to server"] },
     project: { title: "Project push", tasks: ["Design the chat data model (messages, rooms, timestamps, sender)", "Build the basic UI — message list and input box"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 10", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn HTTP vs HTTPS in more depth (handshake, certificates)", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn Socket.io basics — connecting, emitting and listening for events", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Compare HTTP polling vs WebSockets for real-time communication", "Write a short note on the tradeoffs for your Chat App's use case"] },
-    project: { title: "Project push", tasks: ["Implement sending a message and appending it to the message list", "Implement polling (or a basic socket connection) to fetch new messages"] }
+    project: { title: "Project push", tasks: ["Wire up a Socket.io server and connect the client", "Implement sending a message and broadcasting it to all connected clients"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 10", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn embeddings conceptually — turning text into vectors", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn broadcasting to rooms/channels with Socket.io", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Read a short explainer on how embeddings power semantic search", "Write 2 example use cases where embeddings would help a normal app"] },
-    project: { title: "Project push", tasks: ["Add multiple chat rooms/channels", "Add usernames and message timestamps to the UI"] }
+    project: { title: "Project push", tasks: ["Add multiple chat rooms/channels using Socket.io rooms", "Add usernames and message timestamps to the UI"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 10", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn vector databases conceptually — similarity search basics", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn handling disconnects and reconnect logic", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review networking + embeddings/vector DB concepts together", "Write a one-page cheat sheet for the month"] },
     project: { title: "Project push", tasks: ["Polish the chat UI (auto-scroll, read state, empty state)", "Deploy the chat app and link it from your portfolio"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 11", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn Docker basics — what a container and image actually are", "Solve 3 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn Docker basics — what a container and image actually are", "Solve 2 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Compare running an app locally vs inside a container — what changes", "Write a short note on 2 problems Docker solves that you've personally hit"] },
-    project: { title: "Project push", tasks: ["Write a Dockerfile for the Appliance Load & Electricity Bill Tracker and get it running in a container", "Write a Dockerfile for the Local Market Price & Weather Advisory App and get it running in a container"] }
+    project: { title: "Project push", tasks: ["Write a Dockerfile for the Developer Toolbox CLI and get it running in a container", "Write a Dockerfile for the Weather & News Dashboard and get it running in a container"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 11", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn to write a Dockerfile for a Python or Node app", "Solve 3 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn to write a Dockerfile for a Python or Node app", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Read about image layers and why smaller images build/deploy faster", "Check the image size of one of your Dockerfiles and try to shrink it"] },
-    project: { title: "Project push", tasks: ["Write a Dockerfile for the Library Reservation & Notes API, mounting a volume for persistent data", "Confirm the Library Reservation & Notes API container survives a restart with data intact"] }
+    project: { title: "Project push", tasks: ["Write a Dockerfile for the Student Resource API, mounting a volume for persistent data", "Confirm the Student Resource API container survives a restart with data intact"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 11", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn Docker volumes and why they matter for persistent data", "Solve 3 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn Docker volumes and why they matter for persistent data", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn `.dockerignore` and why it matters for build speed", "Add a `.dockerignore` file to one of your projects"] },
-    project: { title: "Project push", tasks: ["Write a Dockerfile for the Hostel Room & Mess-Card Auth System with environment variables passed in", "Test the containerized auth system end to end"] }
+    project: { title: "Project push", tasks: ["Write a Dockerfile for the Authentication System with environment variables passed in", "Test the containerized auth system end to end"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 11", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn basic Docker Compose to run multiple containers together", "Solve 3 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn basic Docker Compose to run multiple containers together", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review Docker concepts as a whole", "Write a one-page Docker cheat sheet (build, run, exec, logs, volumes)"] },
     project: { title: "Project push", tasks: ["Write a docker-compose.yml that runs at least 2 of these projects together", "Push all Dockerfiles to their respective GitHub repos with usage instructions"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 12 (Summer Break)", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Full review — rebuild one Python script and one React component from memory, no notes", "Solve 8 DSA problems on arrays and strings"] },
+    skill: { title: "Skill sprint", tasks: ["Full review — rebuild one Python script and one React component from memory, no notes", "Solve 8 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Review the entire year's focus topics in one sitting — Python, Git, HTML/CSS/JS, SQL", "Write a consolidated one-page cheat sheet covering the whole year"] },
     project: { title: "Project push", tasks: ["Design the dashboard layout that will surface data from your year's projects (GitHub stats, DSA count, project links)", "Build the dashboard shell in React with placeholder sections"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 12 (Summer Break)", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Full review — redo a Git branch/merge/PR cycle and a SQL query set from memory", "Solve 8 DSA problems on hashing and two pointers"] },
+    skill: { title: "Skill sprint", tasks: ["Full review — redo a Git branch/merge/PR cycle and a SQL query set from memory", "Solve 8 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review Linux/bash, React, REST APIs and auth concepts together", "Add these topics to the same consolidated cheat sheet"] },
     project: { title: "Project push", tasks: ["Wire up the GitHub stats section (repo count, recent commits) via the GitHub API", "Wire up a DSA progress section showing problems solved this year"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 12 (Summer Break)", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["DSA intensive — study linked lists and stacks/queues", "Solve 8 DSA problems on linked lists and stacks/queues"] },
+    skill: { title: "Skill sprint", tasks: ["Full review — redo an Express CRUD endpoint and a JWT auth flow from memory", "Solve 7 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review networking, Docker and embeddings/vector DB concepts", "Finish the consolidated cheat sheet — one document covering the full year"] },
     project: { title: "Project push", tasks: ["Add a projects showcase section linking to all shipped Year 1 projects", "Add a simple notes/journal section for ongoing reflections"] }
   },
   {
     yearId: 1, yearLabel: "Year 1", monthName: "Month 12 (Summer Break)", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["DSA intensive — study binary trees and basic traversals", "Solve 6 DSA problems on trees, push toward 150-200 total for the year"] },
+    skill: { title: "Skill sprint", tasks: ["Full review — redo a Docker build and a deployment from memory", "Solve 7 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Do a full year retro — strongest area, weakest area, what surprised you", "Write 3 specific goals for Year 2 based on this retro"] },
-    project: { title: "Project push", tasks: ["Polish the dashboard styling and make it responsive", "Deploy the dashboard as the new centerpiece of your portfolio"] }
+    project: { title: "Project push", tasks: ["Polish the dashboard styling and make it responsive", "Deploy Academic Planner v1 as the new centerpiece of your portfolio"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 1", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn C++ classes and objects — members, constructors, destructors", "Solve 6 DSA problems on arrays with binary search"] },
+    skill: { title: "Skill sprint", tasks: ["Learn PostgreSQL fundamentals — tables, keys and relations", "Solve 7 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Set up a FastAPI or Express project skeleton alongside your C++ work", "Build a single working GET endpoint as a sanity check"] },
-    project: { title: "Project push", tasks: ["Design the Student class (name, roll no, marks, attendance) with constructors", "Implement adding and listing students via the CLI"] }
+    project: { title: "Project push", tasks: ["Design the schema — students, classes, attendance — with foreign keys", "Set up PostgreSQL and create the tables with proper relations"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 1", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn C++ inheritance and polymorphism (virtual functions)", "Solve 6 DSA problems on binary search variants"] },
+    skill: { title: "Skill sprint", tasks: ["Learn PostgreSQL foreign keys and one-to-many relationships", "Solve 6 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn route parameters and query parameters in your chosen backend framework", "Build 2 endpoints that accept path and query params"] },
-    project: { title: "Project push", tasks: ["Implement inheritance — create a GraduateStudent subclass with extra fields", "Implement polymorphic display logic for base vs derived student types"] }
+    project: { title: "Project push", tasks: ["Build the Express project structure and connect it to PostgreSQL", "Implement the signup/login endpoints with password hashing"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 1", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn the two-pointer technique and where it applies", "Solve 6 DSA problems using two pointers"] },
+    skill: { title: "Skill sprint", tasks: ["Learn connecting Express to PostgreSQL (pg or an ORM)", "Solve 6 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn request body parsing and response formatting (JSON)", "Build a POST endpoint that accepts and returns JSON"] },
-    project: { title: "Project push", tasks: ["Implement search and sort of students by roll number or marks", "Add basic file persistence so student records survive a restart"] }
+    project: { title: "Project push", tasks: ["Implement CRUD endpoints for students and classes", "Implement an attendance-marking endpoint scoped to a class and date"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 1", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn prefix sums and difference arrays", "Solve 6 DSA problems using prefix sums"] },
+    skill: { title: "Skill sprint", tasks: ["Learn writing parameterized queries safely (avoiding SQL injection)", "Solve 6 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review C++ OOP and backend routing together", "Write a short note comparing OOP structure in C++ vs the backend framework"] },
-    project: { title: "Project push", tasks: ["Add input validation and error handling throughout", "Push to GitHub with a README explaining the OOP design decisions"] }
+    project: { title: "Project push", tasks: ["Add validation and consistent error responses across endpoints", "Push to GitHub with a Postman collection and README"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 2", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn linked lists — singly and doubly linked, insert/delete", "Solve 6 DSA problems on linked lists"] },
+    skill: { title: "Skill sprint", tasks: ["Learn React Router for multi-page navigation", "Solve 7 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Learn REST API conventions in depth — resource naming, verbs, status codes", "Audit one of your earlier APIs against REST conventions and note violations"] },
-    project: { title: "Project push", tasks: ["Design the schema — books, members, loans — with foreign keys", "Set up PostgreSQL and create the tables with proper relations"] }
+    project: { title: "Project push", tasks: ["Set up React Router with routes for login, dashboard and class views", "Build the login form wired to the Phase 1 auth endpoints"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 2", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn stacks and their applications (matching brackets, undo)", "Solve 6 DSA problems on stacks"] },
+    skill: { title: "Skill sprint", tasks: ["Learn fetching and displaying backend data in React (loading/error states)", "Solve 6 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn CRUD design patterns and idempotency", "Write a short note on which of your endpoints are/aren't idempotent"] },
-    project: { title: "Project push", tasks: ["Implement CRUD endpoints for books and members", "Implement a checkout-book endpoint that creates a loan record"] }
+    project: { title: "Project push", tasks: ["Build the attendance dashboard that lists students per class", "Wire up marking attendance from the UI to the backend endpoint"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 2", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn queues and deques and their applications", "Solve 6 DSA problems on queues/deques"] },
+    skill: { title: "Skill sprint", tasks: ["Learn building forms in React that submit to your Express API", "Solve 6 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn to use Postman (or similar) for structured API testing", "Build a Postman collection testing all planned Library API endpoints"] },
-    project: { title: "Project push", tasks: ["Implement a return-book endpoint that closes the loan and updates availability", "Add a join-based endpoint listing a member's current loans"] }
+    project: { title: "Project push", tasks: ["Build the grades view showing per-student, per-subject marks", "Add a summary view of attendance percentage per student"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 2", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn PostgreSQL keys and relations (primary, foreign, one-to-many)", "Write 5 practice queries joining related tables"] },
+    skill: { title: "Skill sprint", tasks: ["Learn basic authenticated routes on the frontend (protecting pages)", "Solve 6 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review linked lists/stacks/queues and PostgreSQL relations together", "Write a one-page cheat sheet for the month"] },
-    project: { title: "Project push", tasks: ["Add validation (can't checkout an already-borrowed book) and error responses", "Push to GitHub with a Postman collection and README"] }
+    project: { title: "Project push", tasks: ["Polish the UI and handle empty/error states throughout", "Deploy the frontend and backend together and add it to your portfolio"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 3", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn SOLID principles — Single Responsibility and Open/Closed", "Solve 6 DSA problems on hash maps"] },
+    skill: { title: "Skill sprint", tasks: ["Learn SOLID principles — Single Responsibility and Open/Closed", "Solve 7 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Refactor your Library API's book-search logic to follow Single Responsibility", "Write a short note on what changed and why it's cleaner"] },
-    project: { title: "Project push", tasks: ["Design the expense schema with categories, users and auth in mind", "Implement user signup/login with JWT auth reused from Month 9 last year"] }
+    project: { title: "Project push", tasks: ["Design the schema for teams, boards and tasks with ownership", "Implement user signup/login with JWT auth reused from Year 1 Month 9"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 3", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn SOLID principles — Liskov, Interface Segregation, Dependency Inversion", "Solve 6 DSA problems on sets"] },
+    skill: { title: "Skill sprint", tasks: ["Learn the Repository and Factory design patterns with real examples", "Solve 6 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Apply the Factory pattern to how you create expense category objects", "Write a short note on when Factory is worth the extra indirection"] },
-    project: { title: "Project push", tasks: ["Implement CRUD endpoints for expenses, scoped to the authenticated user", "Apply the Strategy pattern to support multiple report formats (summary vs detailed)"] }
+    project: { title: "Project push", tasks: ["Implement CRUD endpoints for boards, scoped to the authenticated user's team", "Apply the Repository pattern to separate data access from route logic"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 3", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn the Singleton and Factory design patterns with real examples", "Solve 6 DSA problems on priority queues/heaps"] },
+    skill: { title: "Skill sprint", tasks: ["Learn structuring an Express app into controllers/services/routes", "Solve 6 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Practice resolving a real Git merge conflict end to end on a scratch repo", "Document your conflict-resolution steps for future reference"] },
-    project: { title: "Project push", tasks: ["Implement category-wise and date-range filtering endpoints", "Add validation and proper error handling using consistent response shapes"] }
+    project: { title: "Project push", tasks: ["Implement task assignment endpoints (assign/unassign a team member)", "Add validation and proper error handling using consistent response shapes"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 3", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn the Strategy pattern and professional Git (rebase, cherry-pick)", "Solve 6 DSA problems, mixed review; practice a rebase and a cherry-pick"] },
+    skill: { title: "Skill sprint", tasks: ["Learn professional Git — rebase and cherry-pick", "Solve 6 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review SOLID and design patterns as a whole", "Write a one-page cheat sheet mapping each principle/pattern to a concrete example from your own code"] },
     project: { title: "Project push", tasks: ["Clean commit history using rebase/cherry-pick on a feature branch", "Push to GitHub with a README documenting the patterns used and why"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 4", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn CPU registers and their role in instruction execution", "Solve 8 DSA problems on binary trees"] },
+    skill: { title: "Skill sprint", tasks: ["Learn drag-and-drop interactions in React (or click-to-move as a simpler alternative)", "Solve 8 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Diagram how cache hierarchy (L1/L2/L3) speeds up memory access", "Relate cache locality to why indexing speeds up SQL queries"] },
-    project: { title: "Project push", tasks: ["Design the task schema (title, status, priority, due date, assignee)", "Build CRUD endpoints for tasks with a Postgres backend"] }
+    project: { title: "Project push", tasks: ["Build the React UI for task boards (columns for todo/in-progress/done)", "Connect the UI to the backend's task CRUD endpoints"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 4", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn cache and virtual memory concepts", "Solve 8 DSA problems on BST operations"] },
+    skill: { title: "Skill sprint", tasks: ["Learn managing complex UI state across multiple boards/columns", "Solve 8 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Study how virtual memory lets programs use more memory than physically exists", "Write a short note connecting virtual memory to paging"] },
-    project: { title: "Project push", tasks: ["Implement status transitions (todo → in-progress → done) with validation", "Implement filtering tasks by status, priority and due date"] }
+    project: { title: "Project push", tasks: ["Implement drag-and-drop or click-to-move status transitions in the UI", "Wire up filtering and sorting in the frontend"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 4", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn the instruction cycle (fetch-decode-execute-store) in depth", "Solve 8 DSA problems on tree traversals (inorder/preorder/postorder)"] },
+    skill: { title: "Skill sprint", tasks: ["Learn cloud deployment basics on Render or Railway", "Solve 7 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Trace through the instruction cycle for a simple arithmetic operation", "Diagram the cycle step by step for `a = b + c`"] },
     project: { title: "Project push", tasks: ["Set up a Render/Railway deployment pipeline for the API", "Deploy the API and confirm all endpoints work against the live database"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 4", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn cloud deployment basics on Render or Railway", "Solve 6 DSA problems, mixed tree review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn basic rate limiting and request logging on the backend", "Solve 7 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review computer organization concepts as a whole", "Write a one-page cheat sheet covering registers, cache, virtual memory and instruction cycle"] },
     project: { title: "Project push", tasks: ["Add basic rate limiting or request logging", "Push to GitHub with deployment instructions in the README"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 5", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Revise OOP — rebuild the Roommate Allocation Engine's class hierarchy from memory", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn SQL joins in more depth — inner, left, and when to use each", "Solve 4 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Design the combined architecture — React frontend, FastAPI backend, Postgres DB", "Sketch the full request flow from UI click to DB write and back"] },
-    project: { title: "Project push", tasks: ["Build the React UI for task boards (columns for todo/in-progress/done)", "Connect the UI to the backend's task CRUD endpoints"] }
+    project: { title: "Project push", tasks: ["Design the event registration schema (events, attendees, slots)", "Build the event-creation and event-listing endpoints"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 5", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Revise DSA — redo 3 problems each from linked lists, trees and hashing without notes", "Solve 8 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn form validation patterns on the backend (required fields, formats)", "Solve 4 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Set up the React frontend project and the FastAPI backend project side by side", "Confirm CORS is configured and the frontend can call the backend"] },
-    project: { title: "Project push", tasks: ["Implement drag-and-drop or click-to-move status transitions in the UI", "Wire up filtering and sorting in the frontend"] }
+    project: { title: "Project push", tasks: ["Implement the attendee registration endpoint with capacity checks", "Add complex form validation (required fields, duplicate registration prevention)"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 5", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Revise SQL — rewrite 3 join queries and 2 aggregate queries from memory", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn designing endpoints for multi-step workflows (registration flows)", "Solve 4 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Wire up JWT auth end to end between frontend and backend", "Test the full login → protected request → logout flow manually"] },
-    project: { title: "Project push", tasks: ["Add user auth to the frontend (login form, protected routes)", "Deploy the frontend and backend together (e.g. Vercel + Render)"] }
+    project: { title: "Project push", tasks: ["Implement an endpoint listing registrations per event with attendee counts", "Add basic auth so only organizers can create/edit events"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 5", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Revise Computer Organization — explain cache and virtual memory out loud to check gaps", "Solve 4 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn writing aggregate queries for reporting (counts, capacity checks)", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Do a mid-year retro — compare Year 2 skills against Year 1", "Write 3 goals for the second half of Year 2"] },
-    project: { title: "Project push", tasks: ["Polish the UI and fix any bugs found during end-to-end testing", "Write a full README and add this capstone to your portfolio"] }
+    project: { title: "Project push", tasks: ["Polish error handling and edge cases (full events, closed registration)", "Push to GitHub with a full README and sample data"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 6 (Winter Break)", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn OAuth 2.0 basics — authorization code flow conceptually", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn generating PDFs/certificates programmatically from templates", "Solve 3 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Compare building your own JWT auth vs using an OAuth provider", "Write a short note on tradeoffs for a solo-developer project"] },
-    project: { title: "Project push", tasks: ["Design the auth service as a standalone microservice (separate from other APIs)", "Implement signup/login endpoints with bcrypt/argon2 hashing"] }
+    project: { title: "Project push", tasks: ["Design the certificate template and the data it needs to fill in", "Implement automated PDF certificate generation per attendee"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 6 (Winter Break)", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn password hashing algorithms in depth — bcrypt vs argon2 tradeoffs", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn sending automated emails from a backend (e.g. via a mail API)", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Read about common auth vulnerabilities (token theft, replay attacks)", "List 3 mitigations for the vulnerabilities you read about"] },
-    project: { title: "Project push", tasks: ["Implement JWT issuing with refresh tokens", "Add a basic OAuth-style social login stub (even if mocked)"] }
+    project: { title: "Project push", tasks: ["Wire up sending the certificate by email after an event closes", "Add an admin dashboard listing all events with quick stats"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 6 (Winter Break)", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn Docker images vs containers in more depth", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn building an admin-only dashboard view with role checks", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn Docker networking — how containers talk to each other", "Diagram how your auth service container would talk to a DB container"] },
-    project: { title: "Project push", tasks: ["Write a Dockerfile for the auth service", "Write a docker-compose.yml running the service with its own DB container"] }
+    project: { title: "Project push", tasks: ["Implement event-closing logic that triggers certificate generation for all attendees", "Add manual override controls for organizers (resend, edit attendee)"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 6 (Winter Break)", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn Docker Compose — services, networks, environment files", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn end-to-end testing a multi-step workflow manually", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review OAuth, hashing and Docker Compose together", "Write a one-page cheat sheet for the module"] },
-    project: { title: "Project push", tasks: ["Test the full containerized flow — signup, login, refresh, protected route", "Push to GitHub with setup instructions for running it via Docker Compose"] }
+    project: { title: "Project push", tasks: ["Test the full event lifecycle end to end (create → register → close → certify)", "Deploy the completed College Event Portal and add it to your portfolio"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 7", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn Divide & Conquer algorithm design (merge sort, quick sort)", "Solve 6 DSA problems using divide & conquer"] },
+    skill: { title: "Skill sprint", tasks: ["Learn calling the GitHub REST API and handling auth/rate limits", "Solve 5 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Trace through merge sort by hand on a small array, step by step", "Trace through quick sort by hand on the same array and compare"] },
-    project: { title: "Project push", tasks: ["Build the UI shell — array bars and a control panel (play/pause/speed)", "Implement bubble sort and insertion sort animations"] }
+    project: { title: "Project push", tasks: ["Write a script that fetches your GitHub profile stats (repos, commits) via the API", "Write a script that fetches your public LeetCode solved-count stats"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 7", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn Greedy algorithm design and when greedy choices work", "Solve 6 DSA problems using greedy strategies"] },
+    skill: { title: "Skill sprint", tasks: ["Learn calling a public LeetCode stats API (or scraping public profile data)", "Solve 5 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Read a short explainer on linear regression with a worked example", "Solve one linear regression example by hand (small dataset)"] },
-    project: { title: "Project push", tasks: ["Implement merge sort animation, visualizing the divide and merge steps", "Implement quick sort animation, visualizing the partition step"] }
+    project: { title: "Project push", tasks: ["Store the fetched stats in a small local database or JSON store", "Add a scheduled job that refreshes the stats periodically"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 7", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn supervised vs unsupervised vs reinforcement learning conceptually", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn scheduling recurring data fetches (polling or a simple scheduled job)", "Solve 5 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Read a short explainer on classification with a worked example (e.g. spam detection)", "Write 2 real examples each of classification and clustering problems"] },
-    project: { title: "Project push", tasks: ["Implement a greedy algorithm visualization (e.g. activity selection)", "Add step-by-step commentary explaining what's happening at each frame"] }
+    project: { title: "Project push", tasks: ["Add basic caching so repeated requests don't re-hit the APIs unnecessarily", "Handle API errors and rate-limit responses gracefully"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 7", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn regression vs classification vs clustering with simple examples", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn caching API responses to avoid hitting rate limits", "Solve 5 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review Divide & Conquer, Greedy and ML fundamentals together", "Write a one-page cheat sheet for the month"] },
-    project: { title: "Project push", tasks: ["Polish the UI (speed slider, array size control, reset button)", "Deploy the visualizer and add it to your portfolio"] }
+    project: { title: "Project push", tasks: ["Write a small API layer that serves the combined stats to a frontend", "Push the fetch scripts and API to GitHub with setup instructions"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 8", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn intro Dynamic Programming — memoization vs tabulation", "Solve 6 DSA problems using memoization"] },
+    skill: { title: "Skill sprint", tasks: ["Learn a charting library (Chart.js or Recharts) — bar and line charts", "Solve 5 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Learn database transactions — what ACID means in practice", "Write a short example of a transaction that needs atomicity"] },
-    project: { title: "Project push", tasks: ["Design the schema — posts, authors, comments, tags — normalized", "Set up React Router with routes for home, post detail and author pages"] }
+    project: { title: "Project push", tasks: ["Build the dashboard shell in React and fetch stats from Phase 1's API", "Render a bar chart of commits per day/week"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 8", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn classic DP problems (knapsack intro, Fibonacci variants)", "Solve 6 DSA problems using tabulation"] },
+    skill: { title: "Skill sprint", tasks: ["Learn designing a dashboard layout for at-a-glance stats", "Solve 5 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn indexing strategies and when an index helps vs hurts", "Add an index to one query in a past project and note the difference"] },
-    project: { title: "Project push", tasks: ["Build the backend CRUD API for posts and comments", "Wire up the frontend to list and view posts from the API"] }
+    project: { title: "Project push", tasks: ["Render a line chart of LeetCode problems solved over time", "Add summary stat cards (total repos, total problems solved, streak)"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 8", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn React Router for multi-page navigation", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn rendering trend data over time (commits/problems per week)", "Solve 5 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review normalization (1NF-3NF) by normalizing a messy sample schema", "Draw the before/after ER diagrams for the normalization exercise"] },
-    project: { title: "Project push", tasks: ["Add a Context-based auth state so only logged-in users can comment/post", "Implement the comment submission flow end to end"] }
+    project: { title: "Project push", tasks: ["Add a language-breakdown chart from your GitHub repo data", "Make all charts responsive and add loading states"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 8", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn the React Context API and custom hooks", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn polishing data visualizations (tooltips, colors, responsiveness)", "Solve 5 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review DP, React Router/Context and DB concepts together", "Write a one-page cheat sheet for the month"] },
-    project: { title: "Project push", tasks: ["Add tag-based filtering and a simple search bar", "Deploy the full blog platform and add it to your portfolio"] }
+    project: { title: "Project push", tasks: ["Polish the full dashboard styling", "Deploy the GitHub + LeetCode Dashboard and add it to your portfolio"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 9", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn cache hierarchy in more depth — L1/L2/L3 and hit/miss rates", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn integrating a rich text editor (e.g. a WYSIWYG library) in React", "Solve 4 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Study branch prediction and pipelining conceptually", "Write a short note on why branch mispredictions slow down execution"] },
-    project: { title: "Project push", tasks: ["Build a PDF upload and text-extraction pipeline", "Chunk the extracted text into passages suitable for embedding"] }
+    project: { title: "Project push", tasks: ["Design the schema — posts, authors, tags — normalized", "Set up auth so only logged-in users can create posts"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 9", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn paging and page tables conceptually", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn designing a schema for posts, authors and tags", "Solve 4 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Read how a basic vector database performs a similarity search", "Write a 3-sentence explanation of cosine similarity in your own words"] },
-    project: { title: "Project push", tasks: ["Generate embeddings for each chunk and store them in a vector index", "Implement a basic similarity search over the stored chunks"] }
+    project: { title: "Project push", tasks: ["Integrate a rich text editor for writing posts", "Build the create-post endpoint and form, saving as draft or published"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 9", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn embeddings in more depth — how text becomes a vector", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn authoring workflows — draft vs published states", "Solve 4 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Research an embeddings API/library and read its quickstart", "Run a minimal script that embeds 3 sentences and compares similarity"] },
-    project: { title: "Project push", tasks: ["Wire up a chat interface that retrieves relevant chunks for a question", "Send retrieved chunks + question to an LLM and display the answer"] }
+    project: { title: "Project push", tasks: ["Implement editing and deleting a post, restricted to its author", "Add tag assignment when creating/editing a post"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 9", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn tokenization and vector search (cosine similarity) conceptually", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn securing authoring endpoints so only the author can edit their post", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review architecture + embeddings/vector search topics together", "Write a one-page cheat sheet for the month"] },
-    project: { title: "Project push", tasks: ["Add citations linking answers back to the source PDF section", "Deploy the assistant and add it to your portfolio"] }
+    project: { title: "Project push", tasks: ["Add a public listing page for published posts", "Push to GitHub with a README describing the authoring flow"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 10", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn multi-container Docker Compose setups (app + DB + reverse proxy)", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn building a nested comment system (parent/child replies)", "Solve 3 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Read how a reverse proxy routes traffic to multiple backend services", "Diagram NGINX sitting in front of your blog's frontend and backend"] },
-    project: { title: "Project push", tasks: ["Write Dockerfiles for the Mess-Menu Nutrition Planner Blog's frontend and backend", "Write a docker-compose.yml wiring frontend, backend and Postgres together"] }
+    project: { title: "Project push", tasks: ["Design the comments schema supporting nested replies", "Implement the comment submission and nested-reply endpoints"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 10", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn environment variable management across services", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn implementing full-text search (SQL LIKE/ILIKE or a search index)", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn how secrets/env vars should be handled in CI/CD (not hardcoded)", "Audit your Mess-Menu Nutrition Planner Blog repo for any hardcoded secrets"] },
-    project: { title: "Project push", tasks: ["Add NGINX as a reverse proxy in front of the frontend and backend", "Configure NGINX routing rules and test locally"] }
+    project: { title: "Project push", tasks: ["Build the comment UI with nested replies rendered correctly", "Add full-text search across post titles and content"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 10", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn NGINX basics — reverse proxy and static file serving", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn pagination and infinite-scroll patterns for post lists", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Read a sample GitHub Actions workflow that runs tests on push", "Write (but don't necessarily finalize) a workflow YAML for your repo"] },
-    project: { title: "Project push", tasks: ["Move all secrets/config into environment files, out of source code", "Add a GitHub Actions workflow that builds the containers on push"] }
+    project: { title: "Project push", tasks: ["Add tag-based filtering and a search bar on the frontend", "Add pagination to the post list and search results"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 10", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn GitHub Actions basics — workflow YAML, triggers, jobs", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn tag-based filtering on the frontend and backend", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review Docker Compose, NGINX and CI/CD together", "Write a one-page cheat sheet for the month"] },
-    project: { title: "Project push", tasks: ["Run the full stack via `docker-compose up` and verify everything works end to end", "Push to GitHub with full setup docs in the README"] }
+    project: { title: "Project push", tasks: ["Polish the full blog platform UI", "Deploy the full Blogging Platform and add it to your portfolio"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 11", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn HTTP/HTTPS and DNS in more depth (building on Year 1)", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn designing a unified schema spanning multiple domains (academics, attendance, projects)", "Solve 4 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Compare WebSockets vs your Year 1 polling-based chat approach", "Write a short note on the tradeoffs and why WebSockets scale better"] },
-    project: { title: "Project push", tasks: ["Set up a WebSocket server and a basic client connection", "Implement sending/receiving messages over the WebSocket in real time"] }
+    project: { title: "Project push", tasks: ["Design a unified PostgreSQL schema combining academics, attendance and projects", "Set up the database and write migration scripts for the unified schema"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 11", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn TCP/IP basics and how WebSockets differ from plain HTTP", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn structuring a larger React app — folders, shared components, hooks", "Solve 4 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Read how Redis pub/sub can fan out messages to multiple chat clients", "Diagram a message flowing from sender through Redis to all subscribers"] },
-    project: { title: "Project push", tasks: ["Add Redis pub/sub so messages fan out across multiple server instances", "Implement multiple chat rooms backed by Redis channels"] }
+    project: { title: "Project push", tasks: ["Build the Express endpoints that serve combined academic + attendance data", "Build the Express endpoints that serve project-tracking data"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 11", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn Redis basics — key-value storage and pub/sub", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn combining data from multiple backend sources into one view", "Solve 4 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn about connection management — reconnects, heartbeats", "Write a short note on how you'd handle a dropped WebSocket connection"] },
-    project: { title: "Project push", tasks: ["Add online/offline presence indicators using Redis", "Implement reconnect logic on the client when the connection drops"] }
+    project: { title: "Project push", tasks: ["Build the React shell with shared layout and navigation for the unified app", "Wire up the academics and attendance views to the new endpoints"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 11", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn caching strategies (cache-aside, TTL, invalidation)", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn basic data-migration thinking (moving from scattered data to one schema)", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review WebSockets, Redis and caching together", "Write a one-page cheat sheet for the month"] },
-    project: { title: "Project push", tasks: ["Polish the UI and test with multiple simultaneous clients", "Deploy the app and add it to your portfolio"] }
+    project: { title: "Project push", tasks: ["Wire up the project-tracking view to the new endpoints", "Push to GitHub with a README explaining the unified schema"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 12", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Capstone revision — redo one algorithm each from Divide & Conquer and DP from memory", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn integrating multiple external APIs into a single settings/sync flow", "Solve 4 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Read a chapter of 'Clean Code' and note 3 practices to adopt", "Refactor one function in an old project using a practice from the chapter"] },
-    project: { title: "Project push", tasks: ["Design the AI Study Assistant for Lab Manuals — notes storage, search, and PDF upload combined", "Build the notes CRUD backend, reusing patterns from the Library Reservation & Notes API"] }
+    project: { title: "Project push", tasks: ["Wire up GitHub and LeetCode stat syncing into the unified app (reusing Year 2 Month 7-8 work)", "Add a settings page for connecting/disconnecting external accounts"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 12", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Capstone revision — rebuild one React Context flow and one Docker Compose file from memory", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn basic real-time notifications (polling or a simple WebSocket channel)", "Solve 4 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Read a chapter of 'The Pragmatic Programmer' and note 3 takeaways", "Apply one takeaway to how you structure your capstone project"] },
-    project: { title: "Project push", tasks: ["Wire up PDF upload and embedding-based search (reusing Month 9's pipeline)", "Build the search UI that returns relevant notes and PDF passages"] }
+    project: { title: "Project push", tasks: ["Add a real-time or polling-based notification for upcoming deadlines", "Add a combined progress view merging DSA, projects and academics"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 12", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Find 2-3 open source issues labeled 'good first issue' in relevant repos", "Submit your first pull request to an open source project"] },
+    skill: { title: "Skill sprint", tasks: ["Learn writing a comprehensive README for a multi-part project", "Solve 4 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Do a full Year 2 review — Algorithms, Architecture, SQL, React, Backend, Docker", "Write a consolidated one-page cheat sheet for the whole year"] },
-    project: { title: "Project push", tasks: ["Add an AI chat interface that answers questions using notes + PDFs as context", "Add citations so answers link back to the source note or PDF"] }
+    project: { title: "Project push", tasks: ["Find 2-3 open source issues labeled 'good first issue' in relevant repos", "Submit your first pull request to an open source project"] }
   },
   {
     yearId: 2, yearLabel: "Year 2", monthName: "Month 12", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Follow up on PR feedback and start reading 'Clean Code'", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn preparing a project for open-source contribution (issues, CONTRIBUTING.md)", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Aim to get a second open source PR opened or merged", "Write a short reflection on what open source contribution taught you"] },
     project: { title: "Project push", tasks: ["Polish the full app UI and deploy it as your Year 2 capstone", "Write a full README and add it to your portfolio as the headline project"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 1", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn database transactions and ACID properties in depth", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn database transactions and ACID properties in depth", "Solve 7 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Read what OS is as a discipline and its core paradigms (kernels, syscalls)", "Write a short note on what a kernel is responsible for"] },
     project: { title: "Project push", tasks: ["Design the ERP schema — students, courses, roles, permissions", "Set up the ORM models and repository layer for students and courses"] }
   },
@@ -933,572 +937,572 @@ const WEEK_BLUEPRINTS = [
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 1", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn indexing strategies and query optimization techniques", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn indexing strategies and basic query optimization", "Solve 6 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Compare raw SQL vs ORM-based queries for the same operation", "Write the same query both ways and note the tradeoffs"] },
     project: { title: "Project push", tasks: ["Implement course enrollment and grade-entry endpoints with transaction safety", "Add indexes on frequently-queried columns and measure the improvement"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 1", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn an ORM (SQLAlchemy or Prisma) and the repository pattern", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn an ORM (Prisma or SQLAlchemy) and the repository pattern", "Solve 6 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review transactions, isolation levels and ORMs together", "Write a one-page cheat sheet for the month"] },
-    project: { title: "Project push", tasks: ["Write Dockerfile and docker-compose for the ERP backend + Postgres", "Push to GitHub with full setup and RBAC documentation"] }
+    project: { title: "Project push", tasks: ["Write a Dockerfile and docker-compose for the ERP backend + Postgres", "Push to GitHub with full setup and RBAC documentation"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 2", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn OS scheduling algorithms conceptually (FCFS, round robin, priority)", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn structuring a larger Express/FastAPI backend into modules", "Solve 5 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Learn AWS EC2 basics — launching and connecting to an instance", "Launch a free-tier EC2 instance and SSH into it"] },
-    project: { title: "Project push", tasks: ["Set up an IAM user/role with least-privilege access for deployment", "Launch an EC2 instance to host the ERP backend"] }
+    project: { title: "Project push", tasks: ["Design and build the attendance-marking module (per class, per session)", "Implement bulk attendance entry and correction endpoints"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 2", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn Linux SSH — key-based auth, remote access", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn writing complex SQL queries with multiple joins and subqueries", "Solve 5 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn AWS S3 basics — buckets, objects, permissions", "Upload and retrieve a file from an S3 bucket via the CLI or console"] },
-    project: { title: "Project push", tasks: ["SSH into the instance and set up the runtime environment (Docker, etc.)", "Deploy the ERP backend container to the EC2 instance"] }
+    project: { title: "Project push", tasks: ["Design and build the grading module (assignments, exams, weighted totals)", "Implement endpoints for entering and updating grades per student"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 2", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn bash scripting for automation and cron jobs", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn attendance/grading data modeling at scale", "Solve 5 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn monitoring basics — what to watch on a live server", "Write a short note on 3 metrics you'd monitor for your ERP backend"] },
-    project: { title: "Project push", tasks: ["Set up an S3 bucket for file uploads (e.g. student documents)", "Wire the ERP backend to read/write files from S3"] }
+    project: { title: "Project push", tasks: ["Build reporting endpoints — attendance percentage and grade summaries per student", "Add faculty-only endpoints for reviewing their own classes"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 2", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn AWS IAM — users, roles, policies", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn API versioning and backward-compatible endpoint design", "Solve 5 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review Linux administration, IAM, EC2 and S3 together", "Write a one-page cheat sheet for the month"] },
-    project: { title: "Project push", tasks: ["Write a bash script to automate redeployment", "Document the full AWS deployment process in the README"] }
+    project: { title: "Project push", tasks: ["Write integration tests covering attendance and grading flows", "Push to GitHub with updated API documentation"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 3", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn Automata Theory basics — DFA and NFA", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn constraint-satisfaction thinking for scheduling problems", "Solve 5 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Draw a DFA for a simple pattern-matching problem by hand", "Write the equivalent regex for the same pattern"] },
-    project: { title: "Project push", tasks: ["Design the secure document assistant architecture — auth, storage, RAG pipeline", "Build document upload with per-user access control"] }
+    project: { title: "Project push", tasks: ["Design the timetable schema (rooms, time slots, courses, faculty)", "Implement conflict-detection logic for room/faculty double-booking"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 3", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn regular expressions and context-free grammars conceptually", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn graph coloring / interval scheduling algorithm concepts", "Solve 5 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn RAG (Retrieval-Augmented Generation) pipeline architecture", "Diagram a RAG pipeline from document ingestion to answer generation"] },
-    project: { title: "Project push", tasks: ["Build the ingestion pipeline — extract, chunk and embed documents", "Store embeddings in a vector database with metadata for citations"] }
+    project: { title: "Project push", tasks: ["Implement a scheduling algorithm that assigns courses to slots avoiding conflicts", "Add manual override endpoints for admin adjustments"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 3", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn system design fundamentals — scalability and horizontal vs vertical scaling", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn writing complex conflict-detection queries in SQL", "Solve 5 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Study how a load balancer distributes traffic across servers", "Write a short note on load balancing strategies (round robin vs least connections)"] },
-    project: { title: "Project push", tasks: ["Build the chat interface with streaming responses from the LLM", "Implement citation links back to the exact document passage used"] }
+    project: { title: "Project push", tasks: ["Add complex queries to check faculty availability across the week", "Optimize the scheduling algorithm for larger course loads"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 3", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn load balancers, reverse proxies and caching layers", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn optimizing an algorithm's runtime for realistic input sizes", "Solve 5 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review automata, system design and RAG together", "Write a one-page cheat sheet for the month"] },
-    project: { title: "Project push", tasks: ["Add access control so users only see their own documents in search results", "Deploy the assistant and add it to your portfolio"] }
+    project: { title: "Project push", tasks: ["Build a simple UI or API view to display the generated timetable", "Push to GitHub with a README explaining the scheduling approach"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 4", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn Docker Compose for multi-service orchestration in depth", "Solve 8 DSA problems on BFS"] },
+    skill: { title: "Skill sprint", tasks: ["Learn query performance profiling (EXPLAIN ANALYZE) and fixing slow queries", "Solve 8 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Write unit tests for 3 core functions in a past project that lacked them", "Measure test coverage and identify the biggest gaps"] },
-    project: { title: "Project push", tasks: ["Design the LMS schema — courses, lessons, enrollments, progress tracking", "Build the React frontend shell for course browsing and lesson viewing"] }
+    project: { title: "Project push", tasks: ["Profile the slowest ERP endpoints using EXPLAIN ANALYZE and identify bottlenecks", "Add appropriate indexes and query rewrites to fix them"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 4", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn GitHub Actions CI/CD pipelines — build, test, deploy stages", "Solve 8 DSA problems on DFS"] },
+    skill: { title: "Skill sprint", tasks: ["Learn caching strategies (cache-aside, TTL) for read-heavy endpoints", "Solve 8 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Write integration tests for one API endpoint chain (e.g. signup → login → protected route)", "Add these tests to a CI pipeline that runs on push"] },
-    project: { title: "Project push", tasks: ["Build the FastAPI backend CRUD for courses, lessons and enrollments", "Wire the frontend to the backend and implement progress tracking"] }
+    project: { title: "Project push", tasks: ["Add a caching layer for frequently-read, rarely-changed data (e.g. course lists)", "Build the final admin interface tying together students, courses and timetable"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 4", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn NGINX configuration for routing and load balancing", "Solve 8 DSA problems on shortest path (Dijkstra)"] },
+    skill: { title: "Skill sprint", tasks: ["Learn writing unit and integration tests for a larger codebase", "Solve 7 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn API endpoint test suites using a framework (pytest, Jest, etc.)", "Write an endpoint test suite for 5 of your LMS's routes"] },
-    project: { title: "Project push", tasks: ["Write unit and integration tests covering the core LMS flows", "Set up a GitHub Actions workflow to run tests on every push"] }
+    project: { title: "Project push", tasks: ["Write unit and integration tests covering the ERP's core flows", "Set up a GitHub Actions workflow to run tests on every push"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 4", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn testing — unit tests, integration tests, API endpoint test suites", "Solve 6 DSA problems, mixed graph review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn setting up a GitHub Actions CI pipeline to run tests automatically", "Solve 7 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review testing strategies and CI/CD together", "Write a one-page cheat sheet for the month"] },
-    project: { title: "Project push", tasks: ["Containerize the full stack with Docker Compose and NGINX in front", "Deploy the LMS and add it to your portfolio"] }
+    project: { title: "Project push", tasks: ["Do a final performance pass under simulated load", "Deploy the completed College ERP and add it to your portfolio"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 5", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn microprocessor registers and their roles", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn calling the OpenAI API and structuring prompts", "Solve 4 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Learn function calling in LLM APIs — how a model requests a tool call", "Write a minimal script that has an LLM call a mock function"] },
-    project: { title: "Project push", tasks: ["Build resume upload and text extraction (PDF/DOCX parsing)", "Design the analysis criteria (skills match, formatting, keyword gaps)"] }
+    project: { title: "Project push", tasks: ["Build a secure PDF upload endpoint and extract raw text from uploaded files", "Chunk the extracted text into passages suitable for embedding"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 5", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn interrupts and how the CPU handles them", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn extracting text from PDFs programmatically", "Solve 4 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn about context windows and how token limits constrain prompts", "Calculate the approximate token count for one of your longer prompts"] },
-    project: { title: "Project push", tasks: ["Build the LLM-based analysis pipeline that scores a resume against a target role", "Implement structured output parsing from the LLM's response"] }
+    project: { title: "Project push", tasks: ["Generate embeddings for each chunk using the OpenAI API and store them in a vector index", "Implement a basic similarity search over the stored chunks"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 5", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn instruction execution and basic assembly concepts", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn chunking text into passages suitable for embedding", "Solve 4 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn tokenization in more depth — how words become tokens", "Compare token counts for 3 sentences of varying complexity"] },
-    project: { title: "Project push", tasks: ["Build the results UI showing strengths, gaps and suggestions", "Add public auth so users can save and revisit past analyses"] }
+    project: { title: "Project push", tasks: ["Wire up a chat interface that retrieves relevant chunks for a question", "Send retrieved chunks + question to the OpenAI API and display the answer"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 5", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn prompt evaluation techniques — comparing outputs against criteria", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn generating and storing embeddings for a chunk of text", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review microprocessors and LLM tooling concepts together", "Write a one-page cheat sheet for the month"] },
-    project: { title: "Project push", tasks: ["Polish the UI and handle edge cases (bad file formats, empty resumes)", "Deploy the analyzer and add it to your portfolio"] }
+    project: { title: "Project push", tasks: ["Add citations linking answers back to the source PDF section", "Deploy the PDF Chat assistant and add it to your portfolio"] }
   },
   {
-    yearId: 3, yearLabel: "Year 3", monthName: "Month 6 (Winter Break + Networks)", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Update your resume and LinkedIn with Year 3 projects so far", "Do one mock interview (with a peer or by recording yourself) and review it"] },
-    academic: { title: "Academic focus", tasks: ["Learn Redis in more depth — data structures beyond key-value", "Write 3 example use cases for Redis lists/sets/sorted sets"] },
-    project: { title: "Project push", tasks: ["Design the collaboration platform — shared documents/whiteboards with live cursors", "Set up the WebSocket infrastructure for real-time updates"] }
+    yearId: 3, yearLabel: "Year 3", monthName: "Month 6 (Winter Break)", weekInMonth: 1,
+    skill: { title: "Skill sprint", tasks: ["Learn prompt engineering fundamentals — role, context, format instructions", "Solve 4 DSA problems related to this week's topic"] },
+    academic: { title: "Academic focus", tasks: [] },
+    project: { title: "Project push", tasks: ["Design prompts that turn extracted PDF text into concise study notes", "Wire the note-generation prompt into the existing PDF pipeline"] }
   },
   {
-    yearId: 3, yearLabel: "Year 3", monthName: "Month 6 (Winter Break + Networks)", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn TCP/IP and UDP — differences and use cases", "Solve 6 DSA problems, mixed review"] },
-    academic: { title: "Academic focus", tasks: ["Learn WebSockets in more depth — building on Year 2's chat app", "Write a short note on scaling WebSocket connections across servers"] },
-    project: { title: "Project push", tasks: ["Implement operational transforms or a simple conflict-resolution strategy for concurrent edits", "Wire Redis for distributed session and presence management"] }
+    yearId: 3, yearLabel: "Year 3", monthName: "Month 6 (Winter Break)", weekInMonth: 2,
+    skill: { title: "Skill sprint", tasks: ["Learn few-shot prompting and structured output prompting", "Solve 4 DSA problems, mixed review"] },
+    academic: { title: "Academic focus", tasks: [] },
+    project: { title: "Project push", tasks: ["Add few-shot examples to improve note formatting consistency", "Test the prompt against 5+ real documents and refine based on failures"] }
   },
   {
-    yearId: 3, yearLabel: "Year 3", monthName: "Month 6 (Winter Break + Networks)", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn HTTP/HTTPS, DNS and routing in more depth (building on Years 1-2)", "Solve 6 DSA problems, mixed review"] },
-    academic: { title: "Academic focus", tasks: ["Learn distributed session management — how sessions work across multiple servers", "Diagram a distributed session flow using Redis as the shared store"] },
-    project: { title: "Project push", tasks: ["Implement live cursor/presence indicators for connected users", "Add room-based collaboration (multiple independent documents)"] }
+    yearId: 3, yearLabel: "Year 3", monthName: "Month 6 (Winter Break)", weekInMonth: 3,
+    skill: { title: "Skill sprint", tasks: ["Learn iterating on a prompt using real failure cases", "Solve 4 DSA problems, mixed review"] },
+    academic: { title: "Academic focus", tasks: [] },
+    project: { title: "Project push", tasks: ["Add a UI for reviewing and editing AI-generated notes", "Add regeneration with adjustable tone/length options"] }
   },
   {
-    yearId: 3, yearLabel: "Year 3", monthName: "Month 6 (Winter Break + Networks)", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn the OSI model layer by layer", "Solve 6 DSA problems, mixed review"] },
-    academic: { title: "Academic focus", tasks: ["Review networking (OSI/TCP/UDP) and distributed sessions together", "Write a one-page cheat sheet for the month"] },
-    project: { title: "Project push", tasks: ["Load-test with multiple simultaneous clients and fix sync bugs", "Deploy the platform and add it to your portfolio"] }
+    yearId: 3, yearLabel: "Year 3", monthName: "Month 6 (Winter Break)", weekInMonth: 4,
+    skill: { title: "Skill sprint", tasks: ["Learn controlling output length and tone via prompting", "Solve 3 DSA problems, mixed review"] },
+    academic: { title: "Academic focus", tasks: [] },
+    project: { title: "Project push", tasks: ["Polish the smart notes feature and fix edge cases (very short/long PDFs)", "Deploy the Smart Notes phase and add it to your portfolio"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 7", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn the SDLC — waterfall vs iterative models", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn designing prompts that output structured flashcard data (Q&A pairs)", "Solve 3 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Write a requirements doc for the Issue Tracking System using SDLC principles", "Break the requirements into a backlog of user stories"] },
-    project: { title: "Project push", tasks: ["Build the schema — issues, projects, sprints, assignees, statuses", "Build CRUD endpoints for issues and projects"] }
+    project: { title: "Project push", tasks: ["Design a prompt that generates flashcards (question/answer pairs) from lecture notes", "Parse and validate the LLM's flashcard output before storing it"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 7", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn Agile/Scrum — sprints, standups, backlogs, story points", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn parsing and validating LLM output before using it in your app", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Draw a UML class diagram for the Issue Tracker's core entities", "Draw a UML sequence diagram for the 'create and assign issue' flow"] },
-    project: { title: "Project push", tasks: ["Build the React UI — kanban-style board with drag-and-drop status changes", "Implement sprint assignment and story-point estimation fields"] }
+    project: { title: "Project push", tasks: ["Build the flashcard data model and storage tied to a source document", "Build the flashcard review UI (flip card, next/previous)"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 7", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn UML basics — class diagrams and sequence diagrams", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn building a flashcard review UI in React (flip card, next/prev)", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Set up a Gitflow branching structure on the Issue Tracker repo", "Practice a feature-branch → PR → code-review → merge cycle"] },
-    project: { title: "Project push", tasks: ["Implement a comment/activity log per issue", "Add filtering by assignee, sprint and status"] }
+    project: { title: "Project push", tasks: ["Implement a simple spaced-repetition scheduling algorithm", "Track review history per flashcard (correct/incorrect, next-due date)"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 7", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn Gitflow — feature branches, release branches, hotfixes", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn spaced-repetition scheduling basics (simple interval algorithm)", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review SDLC, Agile and Gitflow together", "Write a one-page cheat sheet for the month"] },
-    project: { title: "Project push", tasks: ["Do a self-review of the codebase using a PR checklist as if it were a real team review", "Deploy the tracker and add it to your portfolio"] }
+    project: { title: "Project push", tasks: ["Polish the flashcard UI and add a progress summary", "Deploy the Flashcards phase and add it to your portfolio"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 8", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn AWS Lambda basics — functions, triggers, cold starts", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn enforcing strict JSON structured outputs from an LLM", "Solve 3 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Compare serverless vs containerized deployment for a small API", "Write a short note on cost/complexity tradeoffs for each"] },
-    project: { title: "Project push", tasks: ["Design the schema for short URLs, click counts and expiry", "Write the Lambda function to generate and store a shortened URL"] }
+    project: { title: "Project push", tasks: ["Design a prompt that generates quiz questions in strict JSON format from notes", "Add JSON schema validation and a repair/retry step for malformed output"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 8", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn API Gateway — routing requests to Lambda functions", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn validating and repairing malformed LLM JSON output", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn about Lambda cold starts and how to mitigate them", "Write a short note on 2 mitigation strategies"] },
-    project: { title: "Project push", tasks: ["Set up API Gateway routes for create-short-URL and redirect", "Connect the Lambda functions to an RDS Postgres instance"] }
+    project: { title: "Project push", tasks: ["Build the quiz data model (questions, options, correct answer, difficulty)", "Build the quiz-taking UI with multiple-choice selection"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 8", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn AWS RDS basics — managed relational databases", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn building a quiz-taking UI with scoring logic", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn CloudWatch alerting — setting a threshold alarm", "Design 2 alarms you'd want for a production URL shortener"] },
-    project: { title: "Project push", tasks: ["Implement click tracking and a basic analytics endpoint", "Set up CloudWatch logging for all Lambda invocations"] }
+    project: { title: "Project push", tasks: ["Implement scoring logic and a results summary screen", "Add difficulty tiering so quizzes mix easy/medium/hard questions"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 8", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn CloudWatch basics — logs, metrics, alarms", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn generating difficulty-tiered questions via prompting", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review Lambda, API Gateway, RDS and CloudWatch together", "Write a one-page cheat sheet for the month"] },
-    project: { title: "Project push", tasks: ["Add a CloudWatch alarm for error rate or high latency", "Deploy fully and document the serverless architecture in the README"] }
+    project: { title: "Project push", tasks: ["Polish the full AI Study Assistant (PDF chat, notes, flashcards, quizzes) into one app", "Deploy the completed AI Study Assistant and add it to your portfolio"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 9", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn consistent hashing and its role in distributed systems", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn building dynamic, responsive multi-section forms in React", "Solve 3 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Read about the CAP theorem with a concrete example (e.g. a distributed cache)", "Write a short note on which two of C/A/P your projects have prioritized so far"] },
-    project: { title: "Project push", tasks: ["Design the multi-agent architecture — planner agent, search agent, summarizer agent", "Implement the planner agent that breaks a research query into sub-tasks"] }
+    project: { title: "Project push", tasks: ["Design the resume data schema (sections: experience, education, skills, projects)", "Build the multi-section form for entering resume data"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 9", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn message queues (e.g. basic pub/sub or task queues)", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn generating PDFs programmatically from form data (e.g. via a PDF library)", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn how AI agent evaluation works — measuring task success", "Write 3 evaluation criteria you'd use for a research-assistant agent"] },
-    project: { title: "Project push", tasks: ["Implement the search/tool-calling agent that gathers information for each sub-task", "Implement shared memory so agents can pass context between each other"] }
+    project: { title: "Project push", tasks: ["Build a live preview pane that reflects form data in real time", "Add reordering of sections/entries within the form"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 9", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn CDNs and the CAP theorem conceptually", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn structuring resume data into reusable sections (experience, education, skills)", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn tool-calling patterns for AI agents (function registries, structured calls)", "Sketch the tool interface your research agent will expose"] },
-    project: { title: "Project push", tasks: ["Implement the summarizer agent that synthesizes sub-task results into a final answer", "Add a task queue so agents can run sub-tasks concurrently"] }
+    project: { title: "Project push", tasks: ["Implement exporting the resume as a formatted, downloadable PDF", "Add 2-3 selectable resume templates/layouts"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 9", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn autonomous AI agents — planning, tool calling, memory", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn live-preview patterns (form updates reflected instantly in a preview pane)", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review distributed systems and AI agent concepts together", "Write a one-page cheat sheet for the month"] },
-    project: { title: "Project push", tasks: ["Add basic evaluation logging (did each sub-task actually get answered)", "Deploy the engine and add it to your portfolio"] }
+    project: { title: "Project push", tasks: ["Polish the form UX and PDF output styling", "Deploy the Resume Builder and add it to your portfolio"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 10", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn OAuth 2.0 flows in depth — authorization code, client credentials", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn designing a relational schema for companies, applications and stages", "Solve 3 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Audit an earlier auth project against 3 OWASP Top 10 vulnerabilities", "Fix at least one real vulnerability you find"] },
-    project: { title: "Project push", tasks: ["Build the identity microservice with full OAuth2 authorization code flow", "Implement password hashing, HTTPS enforcement and secure cookie flags"] }
+    project: { title: "Project push", tasks: ["Design the schema for companies, job applications and pipeline stages", "Build CRUD endpoints for adding and updating applications"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 10", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn HTTPS/TLS and end-to-end encryption basics", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn building advanced UI patterns — kanban-style board, filters, sort", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn rate limiting and brute-force protection for login endpoints", "Implement basic rate limiting on a login endpoint"] },
-    project: { title: "Project push", tasks: ["Harden the service against injection, broken auth and sensitive data exposure (OWASP)", "Add rate limiting and brute-force lockout on login attempts"] }
+    project: { title: "Project push", tasks: ["Build the kanban-style board UI for tracking application stages", "Implement moving an application between stages (applied/interview/offer/rejected)"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 10", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn the OWASP Top 10 — study the first 5 in depth", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn implementing status-pipeline transitions (applied → interview → offer)", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn micro-benchmarking — measuring endpoint response time under load", "Benchmark 2 endpoints and note the slowest one"] },
-    project: { title: "Project push", tasks: ["Profile the service's endpoints and optimize the slowest ones", "Write security-focused tests (e.g. attempt SQL injection, verify it's blocked)"] }
+    project: { title: "Project push", tasks: ["Build a searchable, filterable table view of all applications", "Add company database features (notes, contacts, links per company)"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 10", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Study the remaining OWASP Top 10 items and learn profiling/benchmarking basics", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn building a searchable, filterable data table in React", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review OAuth2, OWASP and performance profiling together", "Write a one-page cheat sheet for the month"] },
-    project: { title: "Project push", tasks: ["Document the security measures taken in the README", "Deploy the hardened service and add it to your portfolio"] }
+    project: { title: "Project push", tasks: ["Polish the tracker UI and add basic stats (applications this month, response rate)", "Deploy the Job Tracker phase and add it to your portfolio"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 11", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Find and resolve 2-3 more open source issues", "Improve documentation on an open source project you use"] },
+    skill: { title: "Skill sprint", tasks: ["Learn computing derived metrics from raw application data (success rates, funnels)", "Solve 3 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Review your GitHub contribution graph and identify any quiet months", "Write a short plan to keep contributions consistent going into Year 4"] },
-    project: { title: "Project push", tasks: ["Redesign the portfolio site's information architecture (nav, sections, project grid)", "Rebuild the site shell with the new architecture"] }
+    project: { title: "Project push", tasks: ["Build endpoints that compute success-rate and funnel metrics from application data", "Build an analytics dashboard visualizing these metrics with charts"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 11", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Manage a PR review on your own repo as if reviewing someone else's code", "Aim for 5-10 merged PRs across your open source contributions this year"] },
+    skill: { title: "Skill sprint", tasks: ["Learn building analytics charts (funnel chart, conversion rates)", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Read 2-3 strong developer portfolio sites for structure/inspiration", "List 3 specific improvements you want to make to your own site"] },
-    project: { title: "Project push", tasks: ["Add architecture diagrams to your top 3 project pages", "Add live demo links and embedded screenshots/GIFs for each major project"] }
+    project: { title: "Project push", tasks: ["Design and build a collaborative interview-notes feature per application", "Implement adding and timestamping interview notes"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 11", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn how to create clear architecture diagrams for a portfolio piece", "Draw an architecture diagram for one of your Year 3 capstone-level projects"] },
+    skill: { title: "Skill sprint", tasks: ["Learn designing a collaborative notes feature (shared, timestamped entries)", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Write full case studies for your top 3 Year 1-3 projects", "Get feedback on the case studies from a peer or mentor if possible"] },
-    project: { title: "Project push", tasks: ["Write and publish the full case studies for your top 3 projects", "Add an open-source contributions section listing merged PRs"] }
+    project: { title: "Project push", tasks: ["Add filtering analytics by company, role type and date range", "Add an export of analytics data (CSV or PDF summary)"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 11", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn to write a compelling project case study (problem, approach, result)", "Draft a case study outline for 2 of your best Year 3 projects"] },
+    skill: { title: "Skill sprint", tasks: ["Learn structuring an interview-notes repository tied to specific applications", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review open source contribution and portfolio-writing skills together", "Write a one-page cheat sheet on what makes a strong project write-up"] },
-    project: { title: "Project push", tasks: ["Polish styling, performance and mobile responsiveness", "Deploy Portfolio v2 and retire the old version"] }
+    project: { title: "Project push", tasks: ["Polish the analytics dashboard styling", "Deploy the Analytics phase and add it to your portfolio"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 12", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Full review — DBMS (transactions, indexing, normalization)", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn Redis basics — key-value caching and simple pub/sub", "Solve 3 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Consolidate all Year 3 cheat sheets into a single master review document", "Identify your weakest topic from the year and spend extra time on it"] },
-    project: { title: "Project push", tasks: ["Build the core data model and backend CRUD for your chosen capstone", "Set up auth and base API structure"] }
+    project: { title: "Project push", tasks: ["Add Redis caching for frequently-read data (dashboard stats, company list)", "Add a background job for periodic analytics recalculation"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 12", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Full review — OS (scheduling, memory, processes/threads) and Networks", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn background job processing (queues, scheduled tasks)", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Do a full Year 3 retro — compare growth against the Year 3 milestones", "Write 3 specific goals for Year 4"] },
-    project: { title: "Project push", tasks: ["Build the core frontend flows for the chosen capstone", "Wire the frontend to the backend for the primary user journey"] }
+    project: { title: "Project push", tasks: ["Write Dockerfiles for the frontend and backend, and a docker-compose.yml wiring them with Postgres and Redis", "Test the full containerized stack locally end to end"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 12", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Full review — Software Engineering (SDLC, Agile) and System Design", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn writing a docker-compose setup for a multi-service app", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Choose your capstone (AI Workspace, Agile Hub, Cloud Storage, or Code Editor) and scope it", "Write the requirements doc and architecture plan for the chosen capstone"] },
-    project: { title: "Project push", tasks: ["Add the capstone's signature feature (e.g. AI chat, real-time collab, file storage, code execution)", "Write tests covering the core flows"] }
+    project: { title: "Project push", tasks: ["Set up cloud deployment for the containerized app with a managed database", "Configure environment variables and secrets securely for production"] }
   },
   {
     yearId: 3, yearLabel: "Year 3", monthName: "Month 12", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Tool review — Docker, AWS and Linux administration", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn cloud deployment for a full-stack app with a managed database", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Set up the project skeleton (repo, CI, base structure) for the capstone", "Plan the 4-week build timeline you'll actually build during this month"] },
-    project: { title: "Project push", tasks: ["Containerize and deploy the capstone", "Write a full README with architecture notes and add it to your portfolio"] }
+    project: { title: "Project push", tasks: ["Do a final QA pass across all four Placement Portal phases", "Deploy the completed Placement Portal and add it to your portfolio as a capstone project"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 1", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Research and shortlist 2-3 Major Project ideas that match your interests and skill level", "Reach out to potential guides/mentors about your top idea"] },
+    skill: { title: "Skill sprint", tasks: ["Learn system design fundamentals — functional vs non-functional requirements", "Solve 3 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Lock in your electives for the semester", "Confirm your Major Project guide and get the topic formally approved"] },
-    project: { title: "Project push", tasks: ["Write the full requirements document for the Major Project", "Define the core user stories and success criteria"] }
+    project: { title: "Project push", tasks: ["Choose your capstone domain and write a one-page problem statement", "List the target users and their core needs"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 1", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn system design fundamentals — API design and contract-first thinking", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn writing clear user stories and acceptance criteria", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Research your chosen AI specialization (LLM apps / ML pipelines / CV / NLP)", "Read 2-3 reference projects/papers in your chosen specialization"] },
-    project: { title: "Project push", tasks: ["Design the system architecture — components, data flow, API boundaries", "Draw the architecture diagram (monolith vs microservices decision included)"] }
+    project: { title: "Project push", tasks: ["Write user stories covering the main flows of the application", "Define acceptance criteria for each core user story"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 1", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn scalability patterns — vertical/horizontal scaling, stateless services", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn scoping an MVP vs a full feature set", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn DB selection tradeoffs — SQL vs NoSQL for your capstone's needs", "Write a short note justifying your DB choice for the Major Project"] },
-    project: { title: "Project push", tasks: ["Design the database schema and ER diagram", "Get guide feedback on the architecture and requirements doc"] }
+    project: { title: "Project push", tasks: ["Scope the MVP feature set vs stretch goals", "Research 2-3 similar existing products and note what to do differently"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 1", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn monolith vs microservices tradeoffs for a project at your scale", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn evaluating tradeoffs between competing technical approaches", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review system design and specialization research together", "Write a one-page cheat sheet summarizing your architecture decisions"] },
-    project: { title: "Project push", tasks: ["Finalize the engineering plan document incorporating feedback", "Set up the project repo, README and initial folder structure"] }
+    project: { title: "Project push", tasks: ["Write the full system requirements document", "Get feedback on the requirements from a peer or mentor and revise"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 2", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn AWS ECS basics — task definitions, services, clusters", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn drafting a technical spec — architecture diagrams and data flow", "Solve 3 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Learn Terraform basics — providers, resources, state", "Write a minimal Terraform script provisioning one AWS resource"] },
-    project: { title: "Project push", tasks: ["Build the core backend services per the architecture from Month 1", "Implement the primary data models and repository layer"] }
+    project: { title: "Project push", tasks: ["Draft the high-level architecture diagram (frontend, backend, database, external services)", "Choose and justify your tech stack for each layer"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 2", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn AWS ECR — pushing and pulling container images", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn mapping complex database schemas with multiple related entities", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn secrets management (AWS Secrets Manager or similar)", "Move one hardcoded secret from a past project into a secrets manager"] },
-    project: { title: "Project push", tasks: ["Push a working container image to ECR", "Set up a VPC with appropriate subnets and security groups"] }
+    project: { title: "Project push", tasks: ["Map the full database schema with all entities and relationships", "Identify which entities need indexes or special constraints"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 2", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn AWS VPC basics — subnets, security groups, routing", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn defining clean API boundaries between frontend and backend", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Compare ECS vs plain EC2 deployment for your Major Project's needs", "Write a short note justifying your deployment choice"] },
-    project: { title: "Project push", tasks: ["Deploy the core backend service to ECS", "Configure Route 53 for a custom domain (or subdomain) pointing to the service"] }
+    project: { title: "Project push", tasks: ["Define the API boundary — list all major endpoints and their contracts", "Write example request/response payloads for the core endpoints"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 2", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn Route 53 basics — DNS management on AWS", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn choosing a tech stack based on the project's actual requirements", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review AWS ECS/ECR/VPC and Terraform together", "Write a one-page cheat sheet for the month"] },
-    project: { title: "Project push", tasks: ["Test the deployed backend end to end against the planned API contract", "Document the AWS deployment steps in the README"] }
+    project: { title: "Project push", tasks: ["Review the architecture for gaps or risks and revise it", "Write the technical spec document and share it for feedback"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 3", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn model evaluation techniques for LLM-integrated features", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn implementing a production-grade database from a finalized schema", "Solve 3 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Design the evaluation criteria for your Major Project's AI feature", "Write 5 test cases you'll use to evaluate the AI feature's quality"] },
-    project: { title: "Project push", tasks: ["Design the AI feature's integration points into the core backend", "Implement the function-calling/tool interface for the AI feature"] }
+    project: { title: "Project push", tasks: ["Set up the production database and implement the finalized schema", "Write initial migration scripts for the schema"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 3", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn agent architectures relevant to your Major Project's AI feature", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn secure authentication patterns (hashing, JWT, session management)", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn prompt injection risks and basic mitigations for AI-facing APIs", "Write a short note on 2 mitigations you'll apply to your project"] },
-    project: { title: "Project push", tasks: ["Implement structured output parsing and validation from the LLM", "Wire the AI feature into the main application flow"] }
+    project: { title: "Project push", tasks: ["Implement signup and login endpoints with secure password hashing", "Implement JWT issuing and refresh-token handling"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 3", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn function calling and structured outputs from LLM APIs", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn role-based or permission-based access control design", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn rate limiting strategies specific to LLM-cost-sensitive endpoints", "Design a rate-limiting policy for your AI feature's endpoint"] },
-    project: { title: "Project push", tasks: ["Add rate limiting and input validation on the AI-facing endpoint", "Run your 5 evaluation test cases and note the results"] }
+    project: { title: "Project push", tasks: ["Implement role-based or permission-based access control across protected routes", "Write tests covering auth edge cases (expired token, wrong role)"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 3", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn edge security — rate limiting and input validation for AI-facing endpoints", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn writing database migrations safely", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review AI integration and edge security together", "Write a one-page cheat sheet for the month"] },
-    project: { title: "Project push", tasks: ["Fix issues found during evaluation and re-test", "Document the AI integration architecture in the README"] }
+    project: { title: "Project push", tasks: ["Seed the database with realistic sample data for development", "Push to GitHub with schema diagrams and auth flow documentation"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 4", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn message queues in more depth — Kafka basics (topics, producers, consumers)", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn structuring a large backend into clean modules/services", "Solve 3 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Learn centralized logging concepts (structured logs, log aggregation)", "Add structured logging to one service in your Major Project"] },
-    project: { title: "Project push", tasks: ["Instrument the core backend with Prometheus metrics", "Set up a Prometheus server to scrape your service's metrics"] }
+    project: { title: "Project push", tasks: ["Implement the core domain models and repository/service layer", "Build the primary CRUD endpoints for your main entities"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 4", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn event-driven architecture patterns", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn designing REST (or GraphQL) endpoints for your core domain", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Compare event-driven vs request-response architecture for your project's needs", "Write a short note on where an event-driven approach would help"] },
-    project: { title: "Project push", tasks: ["Build a Grafana dashboard visualizing key metrics (latency, error rate, throughput)", "Set up centralized logging across all Major Project services"] }
+    project: { title: "Project push", tasks: ["Implement the core business logic unique to your capstone (the feature that makes it useful)", "Add thorough input validation and consistent error responses"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 4", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn Prometheus basics — metrics, scraping, exporters", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn implementing business logic with proper validation and error handling", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn what makes a good dashboard (signal vs noise, key metrics)", "Sketch the dashboard layout you'll build for your Major Project"] },
-    project: { title: "Project push", tasks: ["If applicable, add an event queue for one async workflow in your project", "Test the telemetry setup by simulating load and watching the dashboard"] }
+    project: { title: "Project push", tasks: ["Implement any secondary endpoints needed to support the frontend", "Write integration tests covering the core backend flows"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 4", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn Grafana basics — dashboards built on Prometheus data", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn writing integration tests for backend services", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review Kafka/event-driven patterns and observability together", "Write a one-page cheat sheet for the month"] },
-    project: { title: "Project push", tasks: ["Add basic alerting for critical thresholds", "Document the observability setup in the README"] }
+    project: { title: "Project push", tasks: ["Do a code review pass and refactor rough edges", "Push to GitHub with updated API documentation"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 5", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Interview review — redo 5 DSA problems from Year 1-2 topics without notes", "Solve 8 DSA problems, mixed interview-style review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn structuring a larger React app — routing, shared components, hooks", "Solve 4 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Write a mock system design doc for a well-known app (e.g. a URL shortener at scale)", "Get feedback on the mock design from a peer or online community"] },
-    project: { title: "Project push", tasks: ["Freeze scope for Phase I and fix any remaining critical bugs", "Run through the full primary user journey manually end to end"] }
+    project: { title: "Project push", tasks: ["Set up the React app structure with routing and a shared layout/nav", "Build the core reusable UI components (buttons, forms, cards, modals)"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 5", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Interview review — explain OS process/thread concepts and DBMS transactions out loud", "Solve 8 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn building accessible, responsive UI components from scratch", "Solve 4 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review your Major Project against production-readiness checklist items (logging, auth, error handling)", "Fix the top 3 gaps found in the checklist review"] },
-    project: { title: "Project push", tasks: ["Containerize all Major Project services consistently", "Set up a staging/beta deployment environment"] }
+    project: { title: "Project push", tasks: ["Build the primary views for your main entities, wired to the backend API", "Implement the main create/edit forms with validation"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 5", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Interview review — explain 2 networking concepts and 2 OOP concepts out loud", "Solve 8 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn state management approaches for a larger app (Context, or a library)", "Solve 4 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Prepare a validation plan for the beta — what needs to work before it's shareable", "Write test scenarios covering the full primary user journey"] },
-    project: { title: "Project push", tasks: ["Run your validation test scenarios against the beta deployment", "Fix issues found during validation testing"] }
+    project: { title: "Project push", tasks: ["Add authenticated routes and login/logout flows on the frontend", "Ensure the UI is responsive across mobile, tablet and desktop"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 5", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Interview review — do one mock system design interview (with a peer or recorded)", "Solve 6 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn connecting frontend forms and views to your backend API", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review interview prep and production-readiness together", "Write a one-page cheat sheet of your weakest interview topics"] },
-    project: { title: "Project push", tasks: ["Do a final review pass on error handling and edge cases", "Share the beta with a few trusted testers and collect feedback"] }
+    project: { title: "Project push", tasks: ["Polish the core UI's visual design and consistency", "Push to GitHub and do a full click-through test of the main flows"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 6 (Winter Break)", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Do 2 mock interviews focused on behavioral questions (STAR method)", "Update your resume with Major Project details and quantified impact"] },
+    skill: { title: "Skill sprint", tasks: ["Learn designing a dashboard layout that surfaces key metrics at a glance", "Solve 3 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Learn LLM fine-tuning basics conceptually", "Write a short note on when fine-tuning beats prompt engineering"] },
-    project: { title: "Project push", tasks: ["Audit the beta feedback from last month and prioritize the top UX fixes", "Implement proper loading and empty states across the app"] }
+    project: { title: "Project push", tasks: ["Design the main dashboard layout and identify the 3-5 most important metrics to surface", "Build the dashboard shell with placeholder sections"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 6 (Winter Break)", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn UX polish principles — loading states, error states, empty states", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn wiring multiple backend endpoints into one cohesive dashboard view", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Learn LoRA and quantization conceptually", "Write a short note on why these techniques reduce compute cost"] },
-    project: { title: "Project push", tasks: ["Implement improved error messaging based on real feedback", "Profile and optimize the slowest queries identified during beta testing"] }
+    project: { title: "Project push", tasks: ["Wire up each dashboard section to its backend endpoint", "Add charts/visualizations for the key metrics"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 6 (Winter Break)", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn query optimization techniques applicable to your Major Project's slow queries", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn adding charts/visualizations for your capstone's key data", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Research running a small local LLM and note the hardware/software requirements", "Write a short feasibility note on using a local LLM in a future project"] },
-    project: { title: "Project push", tasks: ["Write E2E tests for the primary user journey using Playwright/Cypress", "Add these E2E tests to your CI pipeline"] }
+    project: { title: "Project push", tasks: ["Finalize navigation and information architecture across all views", "Add empty/loading/error states to every dashboard section"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 6 (Winter Break)", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn end-to-end (E2E) testing frameworks (Playwright/Cypress)", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn finalizing navigation and information architecture across the app", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review advanced AI topics and UX/testing concepts together", "Write a one-page cheat sheet for the month"] },
-    project: { title: "Project push", tasks: ["Do a final UX pass — consistency, accessibility basics, mobile responsiveness", "Re-share the polished version with testers for a final round of feedback"] }
+    project: { title: "Project push", tasks: ["Polish the full dashboard's styling and responsiveness", "Do a full walkthrough of the app end to end and fix rough edges"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 7", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Find and open 2-3 open source issues to work on", "Submit PRs for the issues you've worked on"] },
+    skill: { title: "Skill sprint", tasks: ["Learn where AI genuinely adds value in your specific capstone (recommendations, search, generation)", "Solve 3 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Write the full public README — setup, usage, architecture overview", "Write a CONTRIBUTING.md if you want outside contributions"] },
-    project: { title: "Project push", tasks: ["Tag and prepare the v1.0 release branch", "Run the full test suite one final time before release"] }
+    project: { title: "Project push", tasks: ["Decide the specific AI feature to add (recommendations, smart search, content generation, etc.) and scope it", "Build the backend integration calling the LLM/ML API"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 7", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Follow up on PR review feedback across your open source contributions", "Aim for 10-15 merged PRs across the semester"] },
+    skill: { title: "Skill sprint", tasks: ["Learn calling an LLM or ML API from your backend", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Write user-facing documentation (how to use the deployed app)", "Record a short demo walkthrough (video or GIF) for the docs"] },
-    project: { title: "Project push", tasks: ["Deploy the production v1.0 build to its permanent hosting", "Verify the production deployment against the full test scenario list"] }
+    project: { title: "Project push", tasks: ["Wire the AI feature into your core domain logic", "Build the frontend UI for the AI feature"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 7", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn how to write clear public documentation for an open source-style release", "Draft the public docs outline for your Major Project"] },
+    skill: { title: "Skill sprint", tasks: ["Learn designing prompts or model inputs specific to your domain", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Do a final security and dependency audit before public release", "Fix any critical issues found in the audit"] },
-    project: { title: "Project push", tasks: ["Publish the public documentation and demo alongside the release", "Announce the release (portfolio, LinkedIn, relevant communities)"] }
+    project: { title: "Project push", tasks: ["Test the AI feature against 10+ real inputs from your app and refine prompts/logic", "Add graceful fallbacks for when the AI feature fails or times out"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 7", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn semantic versioning and changelog conventions", "Write your Major Project's first CHANGELOG entry for v1.0"] },
+    skill: { title: "Skill sprint", tasks: ["Learn evaluating AI feature output quality and handling failures gracefully", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review documentation writing and release practices together", "Write a one-page checklist for future releases"] },
-    project: { title: "Project push", tasks: ["Monitor the live deployment for the first issues post-launch", "Triage and fix any launch-week bugs quickly"] }
+    project: { title: "Project push", tasks: ["Polish the AI feature's UX (loading states, explanations of results)", "Push to GitHub with documentation of how the AI integration works"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 8", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Research target companies/labs — tier-1 companies matching your interests", "Research AI startups and research labs matching your specialization"] },
+    skill: { title: "Skill sprint", tasks: ["Learn background job processing (queues, workers)", "Solve 3 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Rewrite your resume with quantified impact from all 4 years of projects", "Get resume feedback from a mentor, senior, or career service"] },
-    project: { title: "Project push", tasks: ["Finalize the resume — one version tuned for your primary target role", "Create a second resume variant if targeting a notably different role type"] }
+    project: { title: "Project push", tasks: ["Identify 2-3 workflows in your capstone that should run automatically (notifications, cleanups, syncs)", "Set up a background job queue/worker system"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 8", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Research grad program options as a backup/parallel path", "Shortlist 10-15 target opportunities across all three categories"] },
+    skill: { title: "Skill sprint", tasks: ["Learn scheduling recurring tasks with cron jobs", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Rebuild your GitHub profile README to highlight your Major Project and top work", "Pin your 6 best repos with clear descriptions"] },
-    project: { title: "Project push", tasks: ["Finalize the GitHub profile overhaul", "Finalize the personal website overhaul"] }
+    project: { title: "Project push", tasks: ["Implement the first automated workflow as a background job", "Add a scheduled cron job for a recurring task"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 8", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Learn what makes a resume pass ATS screening", "Audit your current resume against ATS best practices"] },
+    skill: { title: "Skill sprint", tasks: ["Learn designing idempotent automated workflows (safe to retry)", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Rebuild your personal website's homepage messaging around your target roles", "Update your LinkedIn headline, About section and featured projects"] },
-    project: { title: "Project push", tasks: ["Finalize the LinkedIn overhaul including a status update about your Major Project launch", "Request 2-3 recommendations/endorsements from mentors or collaborators"] }
+    project: { title: "Project push", tasks: ["Implement the remaining automated workflows, ensuring they're safe to retry", "Add logging so you can see when/whether jobs ran successfully"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 8", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Learn what strong GitHub profiles include (pinned repos, README, contribution graph)", "Audit your GitHub profile against these criteria"] },
+    skill: { title: "Skill sprint", tasks: ["Learn monitoring/logging for background jobs", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Do a full profile review across resume, GitHub, LinkedIn and website for consistency", "Write down 3 people who could refer or introduce you at target companies"] },
-    project: { title: "Project push", tasks: ["Do a final cross-check that resume, GitHub, LinkedIn and website tell the same consistent story", "Start applying to your shortlisted target opportunities"] }
+    project: { title: "Project push", tasks: ["Test all automated workflows under failure conditions (retry, partial failure)", "Push to GitHub with documentation of each automated workflow"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 9", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Learn Clean Architecture principles — layers and dependency direction", "Solve 4 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn writing comprehensive unit tests for critical business logic", "Solve 2 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Read a case study on a real-world refactor to Clean Architecture", "Write a short note on 2 lessons applicable to your project"] },
-    project: { title: "Project push", tasks: ["Refactor the first bounded context to enforce clean domain/infrastructure separation", "Write/update tests to confirm behavior didn't change"] }
+    project: { title: "Project push", tasks: ["Write unit tests covering all critical business logic in the backend", "Write integration tests for the core multi-step flows (signup → core action → result)"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 9", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Learn Domain-Driven Design (DDD) basics — entities, value objects, aggregates", "Solve 4 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn writing integration tests covering multi-step flows", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Map your Major Project's current modules to DDD bounded contexts", "Identify where domain logic is currently leaking into infrastructure code"] },
-    project: { title: "Project push", tasks: ["Refactor the second bounded context using the same approach", "Write/update tests for this context as well"] }
+    project: { title: "Project push", tasks: ["Write end-to-end tests simulating a full user session through the app", "Set up these tests to run automatically via GitHub Actions"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 9", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Identify design pattern anti-patterns present in your Major Project's current code", "Solve 4 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn basic end-to-end testing (simulating a real user session)", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Write the target architecture doc post-refactor", "Get a second opinion on the target architecture if possible"] },
-    project: { title: "Project push", tasks: ["Refactor any remaining shared/cross-cutting concerns (auth, logging) into clean boundaries", "Run the full test suite and fix any regressions"] }
+    project: { title: "Project push", tasks: ["Run a structured manual bug hunt using an edge-case checklist", "Log and triage all bugs found by severity"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 9", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Plan the refactor scope — which modules need boundary changes most", "Solve 3 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn structured manual bug-hunting (test plans, edge case checklists)", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review Clean Architecture and DDD together", "Write a one-page cheat sheet for the month"] },
-    project: { title: "Project push", tasks: ["Do a final code review pass against the target architecture doc", "Update the README's architecture section to reflect the refactor"] }
+    project: { title: "Project push", tasks: ["Fix the highest-severity bugs found during QA", "Re-test the fixed areas and confirm no regressions"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 10", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Read 1-2 AI/DL papers relevant to your specialization", "Write a short summary of each paper's core contribution"] },
+    skill: { title: "Skill sprint", tasks: ["Learn profiling and optimizing frontend performance (bundle size, load time)", "Solve 2 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Identify 2-3 real scalability bottlenecks you solved across your projects", "Outline the technical case study structure (problem, investigation, fix, result)"] },
-    project: { title: "Project push", tasks: ["Publish the first technical case study on your blog/portfolio", "Share it in relevant developer communities for feedback/visibility"] }
+    project: { title: "Project push", tasks: ["Profile frontend load performance and reduce bundle size/lazy-load where useful", "Profile backend response times and fix the slowest endpoints"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 10", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Read a distributed systems whitepaper (e.g. on consistency or consensus)", "Write a short summary connecting it to a project you've built"] },
+    skill: { title: "Skill sprint", tasks: ["Learn profiling and optimizing backend performance (query times, response times)", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Draft the first technical case study in full", "Get feedback on the draft from a peer or mentor"] },
-    project: { title: "Project push", tasks: ["Publish the second technical case study", "Cross-link both case studies from your portfolio's project pages"] }
+    project: { title: "Project push", tasks: ["Set up a CI/CD pipeline that runs tests and deploys automatically on push to main", "Configure staging vs production environments"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 10", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Read 3-5 top engineering blog posts on scalability or architecture", "Note 2 techniques you haven't tried yet"] },
+    skill: { title: "Skill sprint", tasks: ["Learn setting up a full CI/CD pipeline for automated deployment", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Draft the second technical case study in full", "Revise both case studies based on feedback"] },
-    project: { title: "Project push", tasks: ["Write a short retrospective blog post on your Major Project's journey end to end", "Publish the retrospective"] }
+    project: { title: "Project push", tasks: ["Deploy the full app to production with a managed database", "Set up basic uptime/error monitoring"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 10", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Continue applying to target opportunities from Month 8's list", "Follow up on any pending applications"] },
+    skill: { title: "Skill sprint", tasks: ["Learn production environment configuration (env vars, secrets, scaling basics)", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review technical writing and reading together", "Write a one-page cheat sheet on what makes a strong engineering write-up"] },
-    project: { title: "Project push", tasks: ["Review all published writing for consistency and fix any issues", "Add the published pieces to your resume/LinkedIn as writing samples"] }
+    project: { title: "Project push", tasks: ["Do a final load/performance pass under realistic usage", "Confirm the production deployment is stable end to end"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 11", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Final DSA review — redo 5 hard problems spanning arrays through graphs", "Solve 8 DSA problems, timed, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn writing a comprehensive project README (setup, architecture, usage)", "Solve 3 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Do a live mock technical interview with a peer, mentor or platform", "Write down and address the 3 weakest points from the mock"] },
-    project: { title: "Project push", tasks: ["Rehearse explaining your Major Project's architecture clearly in under 3 minutes", "Rehearse explaining one hard technical decision you made and why"] }
+    project: { title: "Project push", tasks: ["Write the full project README — setup instructions, architecture overview, tech stack", "Write API documentation covering every public endpoint"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 11", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Final review — System Design (do one full mock system design interview)", "Solve 8 DSA problems, timed, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn writing clear API documentation for external consumers", "Solve 3 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Do a live mock system design interview", "Write down and address the 3 weakest points from the mock"] },
-    project: { title: "Project push", tasks: ["Rehearse walking through your Major Project's AI integration in interview style", "Prepare answers for likely follow-up/deep-dive questions"] }
+    project: { title: "Project push", tasks: ["Record a short demo video or prepare a live walkthrough of the app", "Polish remaining rough UI edges found during the walkthrough"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 11", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Final review — SQL, OS, DBMS (explain each concept out loud without notes)", "Solve 8 DSA problems, timed, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn preparing a polished live portfolio demo of a large project", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Do a live mock behavioral interview using the STAR method", "Refine your top 5 STAR stories based on the feedback"] },
-    project: { title: "Project push", tasks: ["Rehearse a live coding walkthrough of one project feature end to end", "Time yourself and tighten the explanation"] }
+    project: { title: "Project push", tasks: ["Write a case study covering the problem, architecture decisions and tradeoffs made", "Add the capstone as the headline project on your portfolio site"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 11", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Final review — Networks and OOP (explain each concept out loud without notes)", "Solve 6 DSA problems, timed, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn writing a project case study explaining decisions and tradeoffs", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Review all interview prep areas together", "Write a final one-page cheat sheet of your personal weak spots to review right before interviews"] },
-    project: { title: "Project push", tasks: ["Do one final full mock interview combining DSA, system design and project deep-dive", "Note any last gaps and do focused review on just those"] }
+    project: { title: "Project push", tasks: ["Get feedback on the documentation and demo from a peer or mentor", "Make final revisions based on that feedback"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 12", weekInMonth: 1,
-    skill: { title: "Skill sprint", tasks: ["Finalize any remaining Phase II features per your original engineering plan", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn structuring a technical project presentation (problem, solution, demo, results)", "Solve 2 DSA problems related to this week's topic"] },
     academic: { title: "Academic focus", tasks: ["Write the final Major Project thesis/report following your college's format", "Get the report reviewed by your guide"] },
-    project: { title: "Project push", tasks: ["Complete Phase II final implementation items", "Run full testing and structural verification across the entire system"] }
+    project: { title: "Project push", tasks: ["Build the slide deck and script for presenting your capstone", "Rehearse the presentation and refine timing/clarity"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 12", weekInMonth: 2,
-    skill: { title: "Skill sprint", tasks: ["Do a full regression test pass across the whole Major Project", "Solve 5 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn answering deep technical questions about your own architecture decisions", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Revise the report based on guide feedback", "Finalize and submit the written thesis"] },
-    project: { title: "Project push", tasks: ["Fix any bugs found during final testing", "Confirm the deployed production version matches the submitted codebase exactly"] }
+    project: { title: "Project push", tasks: ["Prepare answers for likely deep-dive technical questions about your architecture", "Do a mock technical interview focused on your capstone with a peer"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 12", weekInMonth: 3,
-    skill: { title: "Skill sprint", tasks: ["Prepare the viva presentation slides — problem, architecture, results, learnings", "Solve 4 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn behavioral interview prep — structuring stories with a clear framework", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Clean up the GitHub repo — remove dead code, finalize README and docs", "Tag the final submission commit/release"] },
-    project: { title: "Project push", tasks: ["Compile the thesis document with final results, screenshots and architecture diagrams", "Submit the thesis and project repository per college requirements"] }
+    project: { title: "Project push", tasks: ["Prepare 5-6 behavioral stories from your 4 years of projects using a clear framework", "Do a mock behavioral interview and refine weak answers"] }
   },
   {
     yearId: 4, yearLabel: "Year 4", monthName: "Month 12", weekInMonth: 4,
-    skill: { title: "Skill sprint", tasks: ["Rehearse the viva presentation out loud at least twice", "Solve 4 DSA problems, mixed review"] },
+    skill: { title: "Skill sprint", tasks: ["Learn negotiating and evaluating offers", "Solve 2 DSA problems, mixed review"] },
     academic: { title: "Academic focus", tasks: ["Prepare onboarding notes for your chosen team/lab if already placed", "Do a final full review of resume, GitHub and portfolio before graduating"] },
-    project: { title: "Project push", tasks: ["Deliver the formal viva defence", "Do a final personal retrospective on the full 4-year journey and what's next"] }
+    project: { title: "Project push", tasks: ["Give the final capstone presentation", "Wrap up — publish the project, update your resume and LinkedIn with the finished capstone"] }
   },
 ];
 
-
-
+// Fallback generator — only used if a (year, month, week) combination
+// is missing from WEEK_BLUEPRINTS above, so the app never breaks.
 function buildCurriculumWeekBlueprints(){
   const weeks = [];
   CURRICULUM.years.forEach(year=>{
@@ -1536,70 +1540,208 @@ function buildCurriculumWeekBlueprints(){
 
 CURRICULUM.weeks = buildCurriculumWeekBlueprints();
 
+/* ============================================================
+   DOMAIN ROTATION — weekly reinforcement tasks
+   ------------------------------------------------------------
+   The 192-week curriculum above is one shared spine (same for
+   everyone, Year 1 foundations especially). On top of it, every
+   week from Year 2 onward gets ONE extra task pulled from here:
+     - Specialists (fullstack/ai-ml/systems/data/security) mostly
+       get tasks from their own domain, reinforcing depth.
+     - Every few weeks, a specialist instead gets a task borrowed
+       from an ADJACENT domain ("give and take") — the same
+       all-round competence the interdisciplinary projects push —
+       so nobody stays purely siloed in one skill.
+     - Generalists rotate through ALL domains in sequence, one
+       track's task at a time, staying broad across the board.
+   Tasks are written at the level a 10+ LPA interview actually
+   probes: depth of the "why", not just "do the tutorial".
+   ============================================================ */
+const DOMAIN_ROTATION_TASKS = {
+  fullstack: [
+    "Learn how the browser rendering pipeline works (parse, style, layout, paint) and explain it out loud in under a minute",
+    "Read about optimistic UI updates and add one to an existing project",
+    "Learn the tradeoffs between SSR, SSG, and CSR — write 3 lines on when you'd pick each",
+    "Add proper loading/error/empty states to one screen you've been ignoring them on",
+    "Learn how JWT vs session-based auth actually differ, and which your projects use and why",
+    "Profile one of your pages with browser devtools and fix the biggest render bottleneck",
+    "Learn what N+1 queries are and check if any of your APIs have one",
+    "Write one integration test for a critical user flow you don't currently test",
+    "Learn accessibility basics (semantic HTML, ARIA, keyboard nav) and audit one page",
+    "Learn how CORS actually works by breaking it on purpose locally, then fixing it",
+    "Design a REST API versioning strategy and apply it to one existing endpoint",
+    "Learn optimistic locking vs pessimistic locking for concurrent writes"
+  ],
+  "ai-ml": [
+    "Learn the bias-variance tradeoff and identify which side one of your models leans toward",
+    "Read about embeddings and manually compute cosine similarity between two short texts",
+    "Learn what overfitting looks like in a loss curve and check one of your training runs for it",
+    "Learn the difference between precision, recall, and F1 — pick the right one for a project and justify it",
+    "Learn how prompt injection attacks work against LLM apps, and check if any of your builds are exposed",
+    "Learn token limits and context windows, and estimate the cost of one of your LLM calls",
+    "Read about RAG failure modes (retrieval miss vs generation miss) and diagnose which one hurts your Q&A project more",
+    "Learn what a confusion matrix tells you that accuracy doesn't, and generate one for a model you've trained",
+    "Learn the basics of model versioning/experiment tracking (even just a spreadsheet counts) and apply it",
+    "Read one paper abstract + intro (skip the math) on a technique you're using and summarize it in your own words",
+    "Learn why data leakage happens between train/test splits and audit one of your pipelines for it",
+    "Learn the cost/latency tradeoffs between a hosted LLM API and a locally-run smaller model"
+  ],
+  systems: [
+    "Learn the difference between horizontal and vertical scaling, and which one your last deployment used",
+    "Learn what a health check endpoint should actually verify, and add a real one (not just 200 OK)",
+    "Read about the CAP theorem and place one of your projects on it honestly",
+    "Learn how DNS resolution works end-to-end, from typing a URL to a response",
+    "Learn the difference between blue-green and rolling deployments, and pick one for a project",
+    "Learn what backpressure is in a system, and identify where one of your services could apply it",
+    "Learn how TLS/SSL handshakes work at a level you could explain in an interview",
+    "Read about idempotency keys and add one to a POST endpoint that currently lacks it",
+    "Learn what a circuit breaker pattern does and sketch where you'd add one to a real project",
+    "Learn the tradeoffs between synchronous and async/queue-based processing for one workflow you built",
+    "Learn how container image layers and caching work, and shrink one of your Dockerfiles",
+    "Learn what observability (logs, metrics, traces) means beyond just 'add logging', and add one metric that matters"
+  ],
+  data: [
+    "Learn the difference between OLTP and OLAP and classify one of your projects' databases",
+    "Learn what a star schema is and sketch one for a dataset you've worked with",
+    "Read about data quality dimensions (completeness, consistency, timeliness) and check one dataset against them",
+    "Learn window functions in SQL and rewrite one query you'd previously done with a loop",
+    "Learn the difference between batch and streaming pipelines, and which fits one of your projects better",
+    "Learn what a slowly changing dimension is and how you'd model one",
+    "Learn indexing strategies (B-tree vs hash) and check if a slow query of yours is missing one",
+    "Read about survivorship bias in datasets and check if one of your analyses has it",
+    "Learn the tradeoffs of denormalization for read-heavy workloads, apply it to one table",
+    "Learn what a data contract is between producer and consumer services, and write one for a pipeline you built",
+    "Learn how to profile a dataset for outliers before trusting any summary statistic from it",
+    "Learn the basics of A/B test statistical significance, and design one for a feature you'd ship"
+  ],
+  security: [
+    "Learn the OWASP Top 10 and audit one of your own deployed apps against the first three",
+    "Learn how SQL injection actually works by exploiting a deliberately vulnerable local app, then patch it",
+    "Learn the difference between authentication and authorization, and check one project doesn't conflate them",
+    "Learn what a JWT can and can't protect against, and where your projects might be over-trusting one",
+    "Learn how rate limiting stops brute-force attacks, and verify one login endpoint you own is protected",
+    "Learn the basics of hashing vs encryption vs encoding, and check nothing in your projects confuses them",
+    "Learn how CSRF attacks work and whether any of your forms are exposed",
+    "Read about the principle of least privilege and check one project's permission model against it",
+    "Learn how a man-in-the-middle attack works and why HTTPS actually prevents it",
+    "Learn what secrets management means beyond '.env files' and improve one project's approach",
+    "Learn the basics of secure password storage (salting, bcrypt/argon2) and verify a project does it right",
+    "Learn how dependency vulnerabilities get discovered and run a vulnerability scan on one of your repos"
+  ]
+};
 
+const DOMAIN_ROTATION_TRACKS = ["fullstack", "ai-ml", "systems", "data", "security"];
+
+// Adjacent-domain pairing used for the occasional cross-pollination task —
+// deliberately not symmetric everywhere; it's "what would genuinely help
+// this specialist's interviews", not just a random neighbor.
+const DOMAIN_ADJACENCY = {
+  fullstack: "systems",
+  "ai-ml": "data",
+  systems: "security",
+  data: "ai-ml",
+  security: "fullstack"
+};
+
+/**
+ * Returns the single "Domain rotation" bonus task for a given global week
+ * index and the user's chosen track. Year 1 (weeks 0-47) stays fully
+ * shared/foundational, so this returns null there — see buildScheduleData.
+ *   - Specialist tracks: mostly pull from their own bank; every 4th week
+ *     (by design, not randomness, so it's stable across renders) pulls one
+ *     task from their adjacent domain instead — the "give and take".
+ *   - "generalist" (or no track chosen yet): rotates through every domain
+ *     in turn, one full domain's flavor per week, cycling continuously.
+ */
+export function getDomainRotationTask(weekIndex, userTrack){
+  const track = DOMAIN_ROTATION_TRACKS.includes(userTrack) ? userTrack : null;
+  if(track){
+    const useAdjacent = (weekIndex % 4) === 3;
+    const sourceTrack = useAdjacent ? DOMAIN_ADJACENCY[track] : track;
+    const pool = DOMAIN_ROTATION_TASKS[sourceTrack];
+    const task = pool[weekIndex % pool.length];
+    return useAdjacent
+      ? { text: task, sourceLabel: (TRACKS[sourceTrack] || {}).label || sourceTrack, isCrossDomain: true }
+      : { text: task, sourceLabel: (TRACKS[track] || {}).label || track, isCrossDomain: false };
+  }
+  // Generalist (or track not yet chosen): cycle through every domain in a
+  // fixed rotation so they get real breadth across all four years.
+  const rotationTrack = DOMAIN_ROTATION_TRACKS[weekIndex % DOMAIN_ROTATION_TRACKS.length];
+  const pool = DOMAIN_ROTATION_TASKS[rotationTrack];
+  const task = pool[Math.floor(weekIndex / DOMAIN_ROTATION_TRACKS.length) % pool.length];
+  return { text: task, sourceLabel: (TRACKS[rotationTrack] || {}).label || rotationTrack, isCrossDomain: false };
+}
+
+/* ============================================================
+   OFFICIAL B.TECH IT SYLLABUS — by semester, per college
+   Each semester ≈ 6 months, 8 semesters across 4 years (aligned
+   1:1 with the 48-month roadmap above — semesterIndex = floor(monthGlobalIndex/6))
+   ============================================================ */
 const SYLLABUS_HITK = [
   { sem:1, year:1, subjects:[
-    { name:"Physics-I", topics:["Central Forces","Oscillations and Vibrations","Wave Optics","Polarization","Quantum Mechanics","Schrödinger Equation","Particle in a Box"] },
-    { name:"Mathematics-I", topics:["Matrices","Rank & Inverse","Eigenvalues & Eigenvectors","Vector Calculus","Gradient, Divergence, Curl","Differential Equations","Infinite Series","Multiple Integration","Green's, Gauss & Stokes Theorems"] },
-    { name:"Electronics Devices & Circuits", topics:["Semiconductor Physics","PN Junction","Diodes","Rectifiers","BJT","MOSFET","JFET","Operational Amplifier","Feedback Amplifiers"] },
-    { name:"Universal Human Values", topics:["Ethics","Human Values","Society","Professional Conduct","Sustainability","Environmental Ethics","Technology & Society"] },
-    { name:"Physics & Electronics Labs", topics:["Physics Laboratory","Electronics Laboratory","Workshop Practices","Engineering Graphics (CAD & Drawing)"] }
+    { name:"Physics-I", topics:["Central Forces","Kepler's Laws","Oscillations","Damping","Forced Vibration","Resonance","Waves","Interference","Polarization","Quantum Mechanics","Schrödinger Equation","Particle in a Box"] },
+    { name:"Mathematics-I", topics:["Matrices","Rank","Determinants","Eigenvalues","Eigenvectors","Diagonalization","Cayley-Hamilton Theorem","Orthogonal Transformation","Gradient","Divergence","Curl","Directional Derivatives","Line Integrals","Surface Integrals","Volume Integrals","Green's Theorem","Stokes Theorem","Gauss Theorem","Sequences & Convergence","Comparison Test","Ratio Test","Root Test","Raabe Test","Alternating Series","First-Order ODE","Bernoulli Equations","Exact Equations","Euler Equations","Second-Order ODE","Variation of Parameters","Partial Derivatives","Euler Theorem","Double Integration","Triple Integration"] },
+    { name:"Electronics", topics:["Energy Bands","Intrinsic Semiconductor","Extrinsic Semiconductor","Drift","Diffusion","PN Junction","VI Characteristics","Rectifiers","Filters","Zener Diode","LED","BJT (CE, CB)","Biasing","Load Line","Amplification","JFET","MOSFET (Enhancement, Depletion)","Op-Amps: Comparator","Inverting Amplifier","Non-Inverting Amplifier","Integrator","Differentiator","Adder","Subtractor"] },
+    { name:"Human Values", topics:["Ethics","Human Values","Society","Professional Ethics","Sustainability","Relationships","Technology Ethics","AI Ethics"] },
+    { name:"Chemistry", topics:["Thermodynamics","Electrochemistry","Batteries","Fuel Cells","Hybridization","Molecular Orbitals","Band Theory","Atomic Structure","Wave Mechanics","UV Spectroscopy","IR Spectroscopy","NMR","Fluorescence","Stereochemistry","Reaction Mechanisms","Drug Synthesis"] },
+    { name:"Practical Labs", topics:["Physics Lab","Chemistry Lab","Electronics Lab"] }
   ]},
   { sem:2, year:1, subjects:[
-    { name:"Chemistry", topics:["Thermodynamics","Electrochemistry","Batteries","Fuel Cells","Molecular Structure","Quantum Chemistry","Spectroscopy","Organic Reactions","Stereochemistry","Drug Chemistry"] },
-    { name:"Mathematics-II", topics:["Probability","Statistics","Numerical Methods","Graph Theory","Trees","Dijkstra Algorithm","BFS","DFS","Laplace Transform"] },
-    { name:"Programming for Problem Solving", topics:["Computer Fundamentals","Number Systems","Algorithms","Flowcharts","C Programming","Loops","Functions","Arrays","Pointers","Structures","Files","Dynamic Memory"] },
-    { name:"Basic Electrical Engineering", topics:["DC Circuits","AC Circuits","Three Phase Systems","Transformers","DC Machines","Induction Motors","Magnetic Circuits"] },
-    { name:"English for Technical Writing", topics:["Business Communication","Technical Writing","Email Writing","Report Writing","Presentation Skills","Professional Communication"] }
+    { name:"Mathematics-II", topics:["Random Variables","Bayes Theorem","Binomial Distribution","Normal Distribution","Newton-Raphson","Bisection","Regula Falsi","LU Decomposition","Gauss Elimination","Runge-Kutta","Graphs","Trees","BFS","DFS","Dijkstra","MST","Kruskal","Prim","Laplace Transform","Inverse Laplace","Convolution","ODE Solving via Laplace"] },
+    { name:"Programming for Problem Solving (C)", topics:["Computer Basics","Number Systems","Algorithms","Flowcharts","Variables","Operators","Loops","Functions","Arrays","Strings","Pointers","Structures","Dynamic Memory","Files","Preprocessor"] },
+    { name:"Basic Electrical Engineering", topics:["KCL","KVL","Network Theorems","Magnetism","AC Circuits","Three-Phase Systems","Transformers","DC Motors","Induction Motors"] },
+    { name:"Technical English", topics:["Phonetics","Communication","Business Writing","Reports","Emails","Proposals","SOP","Presentations"] },
+    { name:"Practical Labs", topics:["C Programming Lab","Electrical Lab","Workshop","Engineering Graphics","CAD"] }
   ]},
   { sem:3, year:2, subjects:[
-    { name:"Discrete Mathematics", topics:["Logic","Sets","Relations","Functions","Graph Theory","Combinatorics","Boolean Algebra"] },
-    { name:"Microprocessor & Microcontroller", topics:["CPU Architecture","8086","8051","Memory","Assembly Language","Interfacing"] },
-    { name:"Digital Circuit Design", topics:["Logic Gates","Boolean Algebra","K-Maps","Combinational Circuits","Sequential Circuits","Flip Flops","Counters"] },
-    { name:"Data Structures & Algorithms", topics:["Arrays","Linked Lists","Stack","Queue","Trees","Binary Search Tree","Heap","Graph","Searching","Sorting","Complexity Analysis"] },
-    { name:"Computer Organization & Architecture", topics:["CPU","Memory","Registers","ALU","Cache","Pipelining","Instruction Cycle","Addressing Modes"] }
+    { name:"Discrete Mathematics", topics:["Logic","Sets","Relations","Functions","Recurrence","Graphs","Combinatorics"] },
+    { name:"Microprocessor & Microcontroller", topics:["8086","8051","Assembly","Interrupts","Timers","Interfacing"] },
+    { name:"Digital Circuit Design", topics:["Logic Gates","Boolean Algebra","K-Map","Combinational Circuits","Sequential Circuits","Flip-Flops","Counters","Registers"] },
+    { name:"Data Structures", topics:["Arrays","Linked Lists","Stacks","Queues","Trees","BST","Heap","Graphs","Hashing"] },
+    { name:"Algorithms", topics:["Time Complexity","Recursion","Divide & Conquer","Greedy","Dynamic Programming","Backtracking","Graph Algorithms","Sorting","Searching"] },
+    { name:"Computer Organization", topics:["Number Representation","CPU","ALU","Registers","Memory Hierarchy","Cache","Pipelining","I/O","Instruction Cycle"] }
   ]},
   { sem:4, year:2, subjects:[
-    { name:"Algebraic Structures", topics:["Groups","Rings","Fields","Modular Arithmetic"] },
-    { name:"Object-Oriented Programming", topics:["Classes","Objects","Inheritance","Polymorphism","Encapsulation","Abstraction","Exception Handling"] },
-    { name:"Design & Analysis of Algorithms", topics:["Divide & Conquer","Greedy","Dynamic Programming","Backtracking","Branch & Bound","Graph Algorithms","Complexity"] },
-    { name:"Database Management Systems", topics:["ER Model","Relational Model","SQL","Normalization","Transactions","Concurrency","Indexing"] },
-    { name:"Computer Networks", topics:["OSI Model","TCP/IP","Routing","Switching","IPv4","IPv6","Transport Layer","Application Layer"] },
-    { name:"Design Thinking Lab", topics:["Innovation","Problem Solving","Product Design","Prototyping"] }
+    { name:"Algebraic Structures", topics:["Groups","Rings","Fields","Modular Arithmetic","Homomorphism"] },
+    { name:"Object-Oriented Programming", topics:["Java","Classes","Objects","Inheritance","Polymorphism","Abstraction","Interfaces","Exception Handling","Collections"] },
+    { name:"Database Management", topics:["ER Model","SQL","Normalization","Transactions","Indexing","Views","PL/SQL"] },
+    { name:"Computer Networks", topics:["OSI","TCP/IP","Routing","Switching","IP","DNS","HTTP","TCP","UDP","Network Security Basics"] },
+    { name:"Design Thinking", topics:["Innovation","Ideation","Prototyping","User-Centered Design"] },
+    { name:"Environmental Science", topics:["Ecology","Pollution","Climate","Sustainability"] }
   ]},
   { sem:5, year:3, subjects:[
-    { name:"Advanced Java & Web Technology", topics:["Advanced Java","Servlets/Frameworks","Web development fundamentals"] },
-    { name:"Artificial Intelligence & Machine Learning", topics:["Search","Knowledge Representation","Supervised Learning","Unsupervised Learning"] },
-    { name:"Operating Systems", topics:["Processes","Threads","Scheduling","Synchronization","Deadlocks","Memory Management"] },
-    { name:"Formal Languages & Automata Theory", topics:["DFA","NFA","Regular Expressions","Context-Free Grammars"] },
-    { name:"Professional Elective", topics:["Computer Graphics","Distributed DBMS","Cyber Security"] },
-    { name:"Open Elective", topics:["Linear Algebra","Statistics","Sensors","VLSI","Network Analysis"] }
+    { name:"Advanced Java & Web", topics:["Advanced Java","Servlets","JSP","JDBC","HTML","CSS","JavaScript","Web Architecture"] },
+    { name:"Artificial Intelligence & Machine Learning", topics:["AI Basics","ML Workflow","Regression","Classification","Clustering","Model Evaluation"] },
+    { name:"Operating Systems", topics:["Processes","Threads","Scheduling","Deadlocks","Memory Management","Paging","Virtual Memory","File Systems"] },
+    { name:"Formal Language", topics:["DFA","NFA","Regular Expressions","CFG","PDA","Turing Machine"] },
+    { name:"Professional Elective", topics:["Computer Graphics","Distributed DBMS","Cyber Security","Agile Development","Big Data","Compiler Design"] },
+    { name:"Open Elective", topics:["Linear Algebra","Statistics","Information Theory","Cloud Computing","Biology","VLSI","Sensors"] }
   ]},
   { sem:6, year:3, subjects:[
-    { name:"Economics for Engineers", topics:["Micro & macro economics for engineering decisions"] },
-    { name:"Software Engineering", topics:["SDLC","Agile/Scrum","UML","Requirements Engineering","Design Patterns"] },
-    { name:"Cryptography & Network Security", topics:["Ciphers","Key Exchange","Hashing","Network Security"] },
-    { name:"Professional Elective A", topics:["Big Data","Compiler Design","Image Processing","Advanced AI","Multimedia"] },
-    { name:"Professional Elective B", topics:["Internet Technology","Distributed Computing","Pattern Recognition","Blockchain","Data Science"] },
-    { name:"Open Elective", topics:["Cloud Computing","Biology","Computational Biology"] },
-    { name:"Industry Competence Lab", topics:["Seminar","Technical Paper"] }
+    { name:"Economics", topics:["Engineering Economics","Cost Analysis","Break-Even","Finance Basics"] },
+    { name:"Software Engineering", topics:["SDLC","UML","Testing","Design Patterns","Maintenance","Documentation"] },
+    { name:"Cryptography & Security", topics:["Encryption","DES","AES","RSA","Hashing","Authentication","Digital Signatures"] },
+    { name:"Professional Elective", topics:["Digital Image Processing","Advanced AIML","Internet Technology","Distributed Computing","Pattern Recognition","Blockchain","Data Science"] },
+    { name:"Seminar", topics:["Literature Review","Technical Writing","Presentation"] },
+    { name:"Industry Lab", topics:["Team Projects","Software Tools","Industrial Practices"] }
   ]},
   { sem:7, year:4, subjects:[
-    { name:"Principles of Management", topics:["Management fundamentals for engineers"] },
+    { name:"Management", topics:["Planning","Leadership","HR","Project Management","Organizational Behavior"] },
     { name:"Professional Elective", topics:["Internet of Things","Mobile Computing","Real-Time Systems","Quantum Computing"] },
-    { name:"Open Elective", topics:["DevOps","5G Communication","Software Defined Radio","Optimization"] },
-    { name:"MOOC Elective", topics:["Ethical Hacking","Cyber Security","Industry 4.0","Industrial IoT","Sustainability"] },
-    { name:"Internship & Major Project Phase-I", topics:["Industrial training","Project scoping & Phase-I work"] }
+    { name:"Open Elective", topics:["DevOps","Optimization","Ethical Hacking","Cyber Security","Industry 4.0","5G Communication","Software Defined Radio","Sustainability","Biosensors"] },
+    { name:"Internship", topics:["Industrial Exposure","Professional Development","Team Collaboration"] },
+    { name:"Project I", topics:["Problem Identification","Design","Implementation","Documentation"] }
   ]},
   { sem:8, year:4, subjects:[
-    { name:"Major Project-II", topics:["Project completion & deployment"] },
-    { name:"Comprehensive Viva", topics:["Viva preparation across the curriculum"] },
-    { name:"Skill Development", topics:["Industry certification"] },
-    { name:"Final Presentation", topics:["Presentation prep & delivery"] }
+    { name:"Project II", topics:["Development","Testing","Deployment","Dissertation"] },
+    { name:"Comprehensive Viva", topics:["Core CS Revision","Project Defense","Technical Interview"] },
+    { name:"Skill Development", topics:["Industry Certification","Professional Skills","Emerging Technologies"] }
   ]}
 ];
 
-
+/* ============================================================
+   JUIT SOLAN — B.TECH CSE/IT SYLLABUS — by semester
+   ============================================================ */
 const SYLLABUS_JUIT = [
   { sem:1, year:1, subjects:[
     { name:"Mathematics-1", topics:["Matrices, Rank & Inverse","Eigenvalues & Eigenvectors","Differential Equations","Infinite Series","Multiple Integration","Vector Calculus"] },
@@ -1674,8 +1816,29 @@ const SYLLABUS_JUIT = [
   ]}
 ];
 
+/* ============================================================
+   COLLEGE REGISTRY — structured institution metadata.
+   Institution identity (name/branch/degree/university) is kept
+   separate from the syllabus itself and from any combined display
+   string, so new colleges/branches can be added without touching
+   syllabus data or UI code, and so professional surfaces (resume,
+   education line) can render a proper "College — Degree, Branch"
+   string instead of a single hand-rolled label.
 
-const COLLEGES = {
+   TO ADD A NEW INSTITUTION:
+   1. Create a new syllabus constant: an array of
+      { sem, year, subjects:[{ name, topics:[...] }, ...] } — see
+      SYLLABUS_HITK / SYLLABUS_JUIT above for the exact shape.
+   2. Register one metadata object below, keyed by a short id:
+        newkey: { id:"newkey", collegeName:"...", shortName:"...",
+                  branch:"...", degree:"...", university:"...",
+                  syllabus: SYLLABUS_NEWKEY }
+   That's it. Every picker, resume export, and settings panel reads
+   this registry directly, and validateSyllabus() below checks the
+   shape at boot so a typo fails loudly instead of breaking silently.
+   No other file or function needs to change.
+   ============================================================ */
+export const COLLEGES = {
   hitk: {
     id: "hitk",
     collegeName: "Heritage Institute of Technology, Kolkata",
@@ -1696,27 +1859,27 @@ const COLLEGES = {
   }
 };
 
-
-
-
-
-function collegeShortLabel(college){
+// Compact chip/dropdown label, e.g. "HITK · IT". Multi-word branch names are
+// abbreviated to initials; single-word branches (already short, e.g. "CSE")
+// pass through as-is — keeps auto-generated labels sensible for any future
+// college without needing a per-college override.
+export function collegeShortLabel(college){
   if(!college) return "";
   const words = (college.branch || "").trim().split(/\s+/).filter(Boolean);
   const branchAbbrev = words.length > 1 ? words.map(w=>w[0]).join("").toUpperCase() : (words[0] || "");
-  return branchAbbrev ? `${college.shortName} · ${branchAbbrev}` : college.shortName;
+  return branchAbbrev ? `${college.shortName} ${branchAbbrev}` : college.shortName;
 }
-
-
-function collegeFullLabel(college){
+// Full professional label for resume/education contexts, e.g.
+// "Heritage Institute of Technology, Kolkata — B.Tech, Information Technology"
+export function collegeFullLabel(college){
   if(!college) return "";
   const degreeBranch = [college.degree, college.branch].filter(Boolean).join(", ");
   return [college.collegeName, degreeBranch].filter(Boolean).join(" — ");
 }
 
-
-
-
+// Fails loudly (console) rather than letting a malformed syllabus break
+// rendering silently somewhere downstream — makes onboarding a 20th
+// college low-risk instead of something that needs careful manual QA.
 function validateSyllabus(collegeId, syllabus){
   const problems = [];
   if(!Array.isArray(syllabus) || !syllabus.length){ problems.push("syllabus must be a non-empty array"); return problems; }
@@ -1734,20 +1897,24 @@ function validateSyllabus(collegeId, syllabus){
 }
 Object.keys(COLLEGES).forEach(id => validateSyllabus(id, COLLEGES[id].syllabus));
 
+// Default is simply "whichever college is registered first" — adding a
+// college never requires touching this or any hardcoded id elsewhere.
+export const DEFAULT_COLLEGE_ID = Object.keys(COLLEGES)[0];
 
+// `let` + `export`: ES modules give consumers a *live binding*, so
+// `import { SYLLABUS } from "../data.js"` in academics.js et al. always
+// sees the current value after setActiveCollege() reassigns it below —
+// no window global or re-export step needed (same pattern tracking.js
+// uses for its own mutable WEEKS/MONTHS exports).
+export let SYLLABUS = COLLEGES[DEFAULT_COLLEGE_ID].syllabus;
 
-const DEFAULT_COLLEGE_ID = Object.keys(COLLEGES)[0];
-
-let SYLLABUS = COLLEGES[DEFAULT_COLLEGE_ID].syllabus;
-
-function setActiveCollege(key){
+export function setActiveCollege(key){
   const college = COLLEGES[key] || COLLEGES[DEFAULT_COLLEGE_ID];
   SYLLABUS = college.syllabus;
-  window.SYLLABUS = SYLLABUS;
   return college;
 }
 
-const REVISION_CYCLE = [
+export const REVISION_CYCLE = [
   "Skim through all lecture notes for this subject",
   "Rework 2 previous years' question papers",
   "Summarize weak topics on one page",
@@ -1757,14 +1924,4 @@ const REVISION_CYCLE = [
   "Final formula sheet & quick revision pass"
 ];
 
-window.DEFAULT_DB = DEFAULT_DB;
-window.CURRICULUM = CURRICULUM;
-window.TRACKS = TRACKS;
-window.QUIZ = QUIZ;
-window.SYLLABUS = SYLLABUS;
-window.COLLEGES = COLLEGES;
-window.DEFAULT_COLLEGE_ID = DEFAULT_COLLEGE_ID;
-window.setActiveCollege = setActiveCollege;
-window.collegeShortLabel = collegeShortLabel;
-window.collegeFullLabel = collegeFullLabel;
-window.REVISION_CYCLE = REVISION_CYCLE;
+
